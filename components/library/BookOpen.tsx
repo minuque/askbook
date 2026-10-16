@@ -85,6 +85,7 @@ export function BookOpen({
   const coverRef = useRef<HTMLDivElement>(null);
   const readRef = useRef<HTMLButtonElement>(null);
   const closing = useRef(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const look = lookOf(book);
   const topic = TOPIC[book.topic];
   const reduce = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -124,12 +125,12 @@ export function BookOpen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const close = useCallback(async () => {
+  const close = useCallback(() => {
     if (closing.current) return;
     closing.current = true;
     setPhase("out");
-    const b = bookRef.current!, c = coverRef.current!, s = shiftRef.current!;
-    if (reduce) return onClose();
+    const b = bookRef.current, c = coverRef.current, s = shiftRef.current;
+    if (reduce || !b || !c || !s) return onClose();
     const opts: KeyframeAnimationOptions = { duration: 540, easing: easeInOut, fill: "forwards" };
     c.getAnimations().forEach((a) => a.commitStyles?.());
     c.animate([{ transform: `${coverZ} rotateY(-180deg)` }, { transform: `${coverZ} rotateY(0deg)` }], opts);
@@ -139,10 +140,27 @@ export function BookOpen({
       .map((k) => ({ ...k, offset: 1 - k.offset }))
       .reverse()
       .map((k, i, all) => ({ ...k, easing: i < all.length - 1 ? ease : undefined }));
-    const fly = b.animate(back, { duration: origin.kind === "spine" ? 760 : 600, delay: 360, fill: "forwards" });
-    await fly.finished.catch(() => {});
-    onClose();
+    const delay = 360;
+    const duration = origin.kind === "spine" ? 760 : 600;
+    const fly = b.animate(back, { duration, delay, fill: "forwards" });
+    // The flight sets the pace, it does not hold the door. A window that is
+    // hidden or throttled freezes animations, and a stage left behind covers
+    // the shelf: every click lands on it and no book can be reached again. So
+    // the clock closes this too, a beat after the flight should have landed.
+    let done = false;
+    const finish = () => {
+      // A flight still in the air when the book leaves lands on nothing: React
+      // has emptied the refs, so its late word cannot shut another book.
+      if (done || !bookRef.current) return;
+      done = true;
+      clearTimeout(closeTimer.current);
+      onClose();
+    };
+    closeTimer.current = setTimeout(finish, delay + duration);
+    fly.finished.then(finish, finish);
   }, [book, coverZ, onClose, origin, reduce, shift]);
+
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
 
   useEffect(() => {
     if (phase === "open") readRef.current?.focus({ preventScroll: true });
