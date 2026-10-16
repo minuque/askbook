@@ -97,6 +97,11 @@ function makeWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false, // preload needs require('electron')
+      // Chromium calls a window behind another one "hidden" and freezes its
+      // animation clock. Books come off the shelf on that clock, so a reader
+      // who puts one back while the window is covered would watch it stop
+      // mid-flight. This app is one window whose whole job is that motion.
+      backgroundThrottling: false,
       spellcheck: false,
     },
   });
