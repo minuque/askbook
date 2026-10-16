@@ -108,7 +108,7 @@ export function applySettings(s: Settings) {
   el.style.setProperty("--leading", String(LEADING[s.leading]));
   el.style.setProperty("--measure-k", String(MEASURE[s.width]));
   // On the desktop shell, the window's title bar follows the theme too.
-  (window as { glossDesktop?: { setTheme?: (t: string) => void } }).glossDesktop?.setTheme?.(theme);
+  (window as { askbookDesktop?: { setTheme?: (t: string) => void } }).askbookDesktop?.setTheme?.(theme);
 }
 
 /**

@@ -16,7 +16,7 @@ export function LocalSync() {
     const s = startSync();
     // Synced after hydration, and again whenever the theme changes.
     const send = () =>
-      (window as { glossDesktop?: { setTheme?: (t: string) => void } }).glossDesktop?.setTheme?.(resolveTheme(useStore.getState().settings.theme));
+      (window as { askbookDesktop?: { setTheme?: (t: string) => void } }).askbookDesktop?.setTheme?.(resolveTheme(useStore.getState().settings.theme));
     send();
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     media.addEventListener("change", send);

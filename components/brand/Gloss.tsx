@@ -20,7 +20,7 @@ export function GlossWordmark() {
     <span className="flex h-9 items-center gap-[7px] text-ink">
       <GlossMark className="size-[21px] shrink-0" />
       <span className="block translate-y-[2px] font-serif text-[21px] font-[440] leading-[21px] tracking-[-0.018em] [font-variation-settings:'opsz'_36]">
-        Gloss
+        askbook
       </span>
     </span>
   );

@@ -3,7 +3,7 @@ import { t } from "@/lib/i18n";
 import { useLang } from "@/lib/useI18n";
 
 /**
- * The landing's top: what Gloss does, in one line, and the place to start.
+ * The landing's top: what askbook does, in one line, and the place to start.
  * "any line" is marked the way a reader marks: the wash, then the pen under it.
  */
 export function Hero({ children }: { children: ReactNode }) {

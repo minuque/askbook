@@ -1,5 +1,5 @@
 /**
- * Local SQLite via node:sqlite. The file lives at $GLOSS_DATA_DIR/gloss.db
+ * Local SQLite via node:sqlite. The file lives at $ASKBOOK_DATA_DIR/gloss.db
  * when the desktop shell sets it (the app's userData directory), else
  * .data/gloss.db next to this checkout. Single-user ("local" user_id). The
  * schema is created on first open, so there is no migrate step. Server-side only.
@@ -13,7 +13,7 @@ let database: DatabaseSync | null = null;
 
 export function db(): DatabaseSync {
   if (!database) {
-    const dir = process.env.GLOSS_DATA_DIR ?? path.join(process.cwd(), ".data");
+    const dir = process.env.ASKBOOK_DATA_DIR ?? path.join(process.cwd(), ".data");
     mkdirSync(dir, { recursive: true });
     database = new DatabaseSync(path.join(dir, "gloss.db"));
     database.exec(SCHEMA);

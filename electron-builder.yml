@@ -1,5 +1,5 @@
-appId: com.gloss.app
-productName: Gloss
+appId: com.askbook.app
+productName: askbook
 directories:
   output: dist
 # A packaged build runs `next start` on the compiled output: .next plus the
