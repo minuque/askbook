@@ -2,11 +2,14 @@
 
 import { useEffect } from "react";
 import { X } from "lucide-react";
+import { STRINGS, t, type StringKey } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
 import { useStore } from "@/lib/store";
 import { useReader } from "./context";
 
 /** A floating preview of the paragraph a citation points to. */
 export function Peek({ peek }: { peek: { n: number; rect: DOMRect } | null }) {
+  useLang();
   const { ix } = useReader();
   if (!peek) return null;
   const id = ix.byNumber.get(peek.n);
@@ -20,25 +23,26 @@ export function Peek({ peek }: { peek: { n: number; rect: DOMRect } | null }) {
     <div className="pop pointer-events-none fixed z-[70] p-4" style={{ ...style, width: w, ["--origin" as string]: below ? "top center" : "bottom center" }} role="tooltip">
       <p className="mb-1.5 text-[11.5px] font-semibold tabular-nums text-rubric-text">¶{peek.n}</p>
       <p className="line-clamp-6 font-serif text-[15px] leading-[1.5] text-ink">{text}</p>
-      <p className="mt-2 text-[11.5px] text-ink-4">Click to jump there</p>
+      <p className="mt-2 text-[11.5px] text-ink-4">{t("clickToJump")}</p>
     </div>
   );
 }
 
-const KEYS: [string, string][] = [
-  ["Select text, then type", "Ask about the selection"],
-  ["/", "Ask about the whole text"],
-  ["J  K", "Next and previous paragraph"],
-  ["Enter", "Ask about the current paragraph"],
-  ["[  ]", "Previous and next gloss"],
-  ["B", "Gloss this text"],
-  ["N", "Notebook"],
-  ["F", "Focus mode"],
-  ["Esc", "Close or step back"],
-  ["?", "This list"],
+const KEYS: [StringKey | string, StringKey][] = [
+  ["selectAndType", "askSelection"],
+  ["/", "askWhole"],
+  ["J  K", "nextPrevPara"],
+  ["enter", "askCurrent"],
+  ["[  ]", "prevNextGloss"],
+  ["B", "glossThis"],
+  ["N", "notebook"],
+  ["F", "focusMode"],
+  ["Esc", "closeOrBack"],
+  ["?", "thisList"],
 ];
 
 export function Shortcuts() {
+  useLang();
   const open = useStore((s) => s.shortcutsOpen);
   const setUI = useStore((s) => s.setUI);
   useEffect(() => {
@@ -50,24 +54,27 @@ export function Shortcuts() {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[80] grid place-items-center bg-ink/20 p-4 backdrop-blur-[2px]" onClick={() => setUI({ shortcutsOpen: false })} style={{ animation: "fade 0.2s" }}>
-      <div role="dialog" aria-label="Keyboard shortcuts" className="pop w-full max-w-[420px] p-6" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-label={t("keyboardShortcuts")} className="pop w-full max-w-[420px] p-6" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-serif text-[22px] leading-none text-ink">Keys</h2>
-          <button type="button" aria-label="Close" data-tip="Close" data-tip-kbd="Esc" onClick={() => setUI({ shortcutsOpen: false })} className="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-sunk">
+          <h2 className="font-serif text-[22px] leading-none text-ink">{t("keys")}</h2>
+          <button type="button" aria-label={t("close")} data-tip={t("close")} data-tip-kbd="Esc" onClick={() => setUI({ shortcutsOpen: false })} className="grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-sunk">
             <X size={16} />
           </button>
         </div>
         <dl className="divide-y divide-rule">
-          {KEYS.map(([k, v]) => (
-            <div key={k} className="flex items-center justify-between gap-4 py-2.5">
-              <dt className="flex gap-1">
-                {k.includes(",") || k.length > 6
-                  ? <span className="text-[13px] text-ink-2">{k}</span>
-                  : k.split("  ").map((x) => <kbd key={x}>{x}</kbd>)}
-              </dt>
-              <dd className="text-right text-[13px] text-ink-3">{v}</dd>
-            </div>
-          ))}
+          {KEYS.map(([k, v]) => {
+            const key = k in STRINGS ? t(k as StringKey) : (k as string);
+            return (
+              <div key={k} className="flex items-center justify-between gap-4 py-2.5">
+                <dt className="flex gap-1">
+                  {key.includes(",") || key.length > 6
+                    ? <span className="text-[13px] text-ink-2">{key}</span>
+                    : key.split("  ").map((x) => <kbd key={x}>{x}</kbd>)}
+                </dt>
+                <dd className="text-right text-[13px] text-ink-3">{t(v)}</dd>
+              </div>
+            );
+          })}
         </dl>
       </div>
     </div>
@@ -76,6 +83,7 @@ export function Shortcuts() {
 
 /** Resume toast and first-run hint share this little card. */
 export function Toast({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  useLang();
   return (
     <div
       role="status"
@@ -83,7 +91,7 @@ export function Toast({ children, onClose }: { children: React.ReactNode; onClos
       style={{ animation: "rise 0.45s var(--ease-spring) both" }}
     >
       {children}
-      <button type="button" aria-label="Dismiss" onClick={onClose} className="grid size-7 place-items-center rounded-full text-lens-mute hover:bg-lens-hover hover:text-lens-fg">
+      <button type="button" aria-label={t("dismiss")} onClick={onClose} className="grid size-7 place-items-center rounded-full text-lens-mute hover:bg-lens-hover hover:text-lens-fg">
         <X size={14} />
       </button>
     </div>

@@ -2,7 +2,9 @@
 
 import { memo, useEffect, useState } from "react";
 import { paintedUrl } from "@/lib/covers";
-import { iconSrc, lookOf, TOPIC, topicArtSrc, type Book, type Look, type TagKey, type TopicKey } from "@/lib/library";
+import { t as tr } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
+import { iconSrc, lookOf, TOPIC, TOPIC_KEYS, topicArtSrc, type Book, type Look, type TagKey, type TopicKey } from "@/lib/library";
 
 /** One of the library's own emoji: a small clay figure for a topic or a tag. */
 export function Glyph({ k, size = 18, className = "" }: { k: TopicKey | TagKey; size?: number; className?: string }) {
@@ -100,6 +102,7 @@ export function Plate({ book, reveal = false }: { book: Book; reveal?: boolean }
  * Sized by its container, so the same cover works at any scale.
  */
 export const Cover = memo(function Cover({ book, look = lookOf(book), draw = false }: { book: Book; look?: Look; draw?: boolean }) {
+  useLang();
   const t = TOPIC[book.topic];
   return (
     <div className="cover" data-light={look.light || undefined} style={{ background: look.color, color: look.fg }}>
@@ -109,7 +112,7 @@ export const Cover = memo(function Cover({ book, look = lookOf(book), draw = fal
       <div className="cover-type">
         <p className="cover-kicker">
           <Glyph k={t.key} size={14} className="cover-glyph" />
-          <span>{t.name}</span>
+          <span>{tr(TOPIC_KEYS[t.key] as never)}</span>
           {book.year && <span className="tabular-nums">{book.year}</span>}
         </p>
         <p className="cover-title">{book.title}</p>

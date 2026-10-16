@@ -79,6 +79,35 @@ export const TOPIC = Object.fromEntries(TOPICS.map((t) => [t.key, t])) as Record
 export const isTopic = (v: unknown): v is TopicKey => typeof v === "string" && v in TOPIC;
 export const topicOf = (v: unknown): TopicKey => (isTopic(v) ? v : "unsorted");
 
+/** i18n keys for topic names, indexed by TopicKey. The `name` field on TOPICS stays English for the classifier; render with t(TOPIC_KEYS[k]). */
+export const TOPIC_KEYS: Record<TopicKey, string> = {
+  ai: "topicAi",
+  programming: "topicProgramming",
+  infra: "topicInfra",
+  data: "topicData",
+  security: "topicSecurity",
+  tech: "topicTech",
+  design: "topicDesign",
+  product: "topicProduct",
+  startups: "topicStartups",
+  business: "topicBusiness",
+  work: "topicWork",
+  economics: "topicEconomics",
+  money: "topicMoney",
+  science: "topicScience",
+  health: "topicHealth",
+  mind: "topicMind",
+  climate: "topicClimate",
+  philosophy: "topicPhilosophy",
+  history: "topicHistory",
+  politics: "topicPolitics",
+  culture: "topicCulture",
+  writing: "topicWriting",
+  learning: "topicLearning",
+  living: "topicLiving",
+  unsorted: "topicUnsorted",
+};
+
 /** One text as the shelves see it: the shelf entry, with your reading laid over it. */
 export type Book = {
   id: string;
@@ -100,8 +129,6 @@ export type Book = {
   image?: string;
   /** A painted cover: a bundled one by path, or "painted" for one made for you. */
   cover?: string;
-  /** Saved by an agent rather than by hand. */
-  agent: boolean;
   /** A bundled sample: always there, cannot be removed. */
   sample: boolean;
 };
@@ -204,6 +231,8 @@ export const SORTS: { key: Sort; label: string }[] = [
   { key: "color", label: "Colour" },
   { key: "length", label: "Length" },
 ];
+/** i18n keys for the four sorts, indexed the same way. */
+export const SORT_KEYS = { topic: "sortTopic", recent: "sortRecent", color: "sortColor", length: "sortLength" } as const;
 
 const TOPIC_ORDER = Object.fromEntries(TOPICS.map((t, i) => [t.key, i])) as Record<TopicKey, number>;
 
@@ -231,9 +260,12 @@ export function groupOf(b: Book, sort: Sort): { key: string; label: string; icon
   return null;
 }
 
+/** i18n keys for the four length runs; resolve at render with t(). */
+export const RUN_KEYS = { quick: "quickRun", sitting: "sittingRun", long: "eveningRun", weekend: "weekendRun" } as const;
+
 /* ---------- tags you can filter by ---------- */
 
-export type TagKey = "favorite" | "reading" | "finished" | "quick" | "long" | "agent";
+export type TagKey = "favorite" | "reading" | "finished" | "quick" | "long";
 
 export const TAGS: { key: TagKey; label: string; test: (b: Book) => boolean }[] = [
   { key: "reading", label: "Reading now", test: (b) => b.pct > 0 && b.pct < 1 },
@@ -241,10 +273,11 @@ export const TAGS: { key: TagKey; label: string; test: (b: Book) => boolean }[] 
   { key: "finished", label: "Finished", test: (b) => b.pct >= 1 },
   { key: "quick", label: "Under 10 min", test: (b) => b.minutes < 10 },
   { key: "long", label: "Long reads", test: (b) => b.minutes >= 45 },
-  { key: "agent", label: "From your agent", test: (b) => b.agent },
 ];
+/** i18n keys for the tags, indexed the same way. */
+export const TAG_KEYS = { reading: "tagReading", favorite: "tagFavorite", finished: "tagFinished", quick: "tagQuick", long: "tagLong" } as const;
 
-export const tagsOf = (b: Book) => TAGS.filter((t) => t.key !== "agent" && t.test(b));
+export const tagsOf = (b: Book) => TAGS.filter((t) => t.test(b));
 
 export const fmtMinutes = (m: number) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}`);
 

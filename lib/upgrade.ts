@@ -18,7 +18,6 @@
  */
 
 import { blockText, markdownBlocks, modelText, wordCount, type Article, type Block } from "./article";
-import { readApiKey } from "./ask";
 import { htmlTablesToMarkdown, renderPages } from "./pdf";
 import { loadDoc, loadPdf, saveDoc, useStore } from "./store";
 
@@ -104,7 +103,6 @@ export function startUpgrade(id: string, listener: (p: UpgradeProgress) => void)
       // Another device has the text but not the file: nothing to read from.
       if (!pdf) return;
       const bytes = new Uint8Array(await pdf.arrayBuffer());
-      const apiKey = readApiKey() || undefined;
       total = pending.length;
       onProgress({ done, total, active: true });
 
@@ -120,19 +118,19 @@ export function startUpgrade(id: string, listener: (p: UpgradeProgress) => void)
               const res = await fetch("/api/pdf-page", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ image: s.image, apiKey, mode: "layout" }),
+                body: JSON.stringify({ image: s.image, mode: "layout" }),
               });
-              const j = (await res.json()) as { markdown?: string; code?: string };
-              return { page: s.pageNum, markdown: j.markdown, spent: j.code === "need_key" };
+              const j = (await res.json()) as { markdown?: string };
+              return { page: s.pageNum, markdown: j.markdown, failed: !j.markdown };
             } catch {
-              return { page: s.pageNum, markdown: undefined, spent: false };
+              return { page: s.pageNum, markdown: undefined, failed: true };
             }
           })
         );
 
         for (const r of readings) {
-          // Free use spent: keep the text layer and the list, and try again another day.
-          if (r.spent) stopped = true;
+          // The page reader is down: keep the text layer and the list, and try again later.
+          if (r.failed) stopped = true;
           if (stopped) break;
           const doc = await loadDoc(id);
           if (!doc || frozen(id)) return;

@@ -1,0 +1,41 @@
+appId: com.gloss.app
+productName: Gloss
+directories:
+  output: dist
+# A packaged build runs `next start` on the compiled output: .next plus the
+# deps it imports. Source dirs (app/, components/, lib/) are not shipped.
+# The shell forks `next start` inside the app directory, so that directory has to
+# be a real one: a path into app.asar cannot be a child process's working
+# directory, and the spawn fails with ENOENT.
+asar: false
+files:
+  - electron/**
+  - .next/**
+  - public/**
+  - node_modules/**
+  - package.json
+  - next.config.ts
+  - "!**/*.map"
+  - "!.data/**"
+  - "!dist/**"
+  # Dev-server leftovers: only the production build is needed.
+  - "!.next/dev/**"
+  - "!.next/cache/**"
+  - "!.next/trace"
+win:
+  target: nsis
+  icon: electron/icon.png
+  # Electron ships 55 locale packs; the app only speaks English and Chinese.
+  electronLanguages:
+    - en
+    - en-US
+    - en-GB
+    - zh-CN
+    - zh-TW
+mac:
+  target: dmg
+  category: public.app-category.productivity
+  icon: electron/icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true

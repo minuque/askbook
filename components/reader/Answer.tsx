@@ -2,6 +2,8 @@
 
 import { Fragment, memo, type ReactNode } from "react";
 import { undash } from "@/lib/article";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
 import type { Source } from "@/lib/models";
 import { useReader } from "./context";
 
@@ -95,7 +97,7 @@ function Cite({ n, label }: { n: number; label: string }) {
       onMouseLeave={() => peek(null)}
       onFocus={(e) => exists && peek(n, e.currentTarget.getBoundingClientRect())}
       onBlur={() => peek(null)}
-      aria-label={`Jump to paragraph ${n}`}
+      aria-label={t("jumpToPara", { n })}
     >
       ¶{label}
     </button>
@@ -161,6 +163,7 @@ function tokens(text: string, plain = false, sources?: Source[]): ReactNode[] {
 
 /** `plain` drops paragraph citations, for answers that live outside a reader. */
 function AnswerImpl({ text, streaming, plain = false, sources }: { text: string; streaming?: boolean; plain?: boolean; sources?: Source[] }) {
+  useLang();
   const parts = parseBlocks(undash(plain ? text.replace(/\s?\[\s*¶[^\]]{0,60}\]/g, "") : text));
   const caret = streaming ? <span className="caret" aria-hidden /> : null;
   if (!parts.length) return streaming ? <p>{caret}</p> : null;
@@ -195,8 +198,9 @@ export const Answer = memo(AnswerImpl);
 
 /** The web results under an answer that used them, numbered as the answer cites them. */
 export function Sources({ sources }: { sources: Source[] }) {
+  useLang();
   return (
-    <ol className="sources mt-3 space-y-1 border-t border-rule pt-2.5" aria-label="Web sources">
+    <ol className="sources mt-3 space-y-1 border-t border-rule pt-2.5" aria-label={t("webSources")}>
       {sources.map((s) => (
         <li key={s.n}>
           <a

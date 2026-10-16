@@ -1,16 +1,23 @@
 /**
- * Together AI client. Server-side only. Raw fetch, OpenAI-compatible SSE.
+ * LLM client for the local magpie gateway. Server-side only. Raw fetch,
+ * OpenAI-compatible SSE — the same wire Together spoke, so the stream parser
+ * is unchanged.
+ *
+ * magpie runs at http://127.0.0.1:3425 and accepts any bearer key; MAGPIE_*
+ * env vars only move it somewhere else.
  *
  * Things learned the hard way, kept on purpose:
- * 1. A named User-Agent. Together's WAF has 403'd the default undici agent.
- * 2. stream_options.include_usage, so the cost receipt is real, not a guess.
+ * 1. A named User-Agent survives picky WAFs upstream of the gateway.
+ * 2. stream_options.include_usage, so the token receipt is real, not a guess.
  * 3. Errors come back as JSON: surface error.message, not the raw body.
- * 4. enable_thinking:false keeps reasoners from spending the budget thinking.
- *    Verified per model on 2026-10-08 with the full sample article (11k tokens).
+ * 4. enable_thinking:false keeps reasoners from burning latency thinking.
+ *    magpie translates or ignores it per upstream.
  */
 
-export const TOGETHER_URL = "https://api.together.xyz/v1/chat/completions";
+export const MAGPIE_BASE = (process.env.MAGPIE_BASE_URL ?? "http://127.0.0.1:3425/v1").replace(/\/+$/, "");
+export const LLM_URL = `${MAGPIE_BASE}/chat/completions`;
 export const APP_UA = "Gloss/0.1";
+const magpieKey = () => process.env.MAGPIE_API_KEY ?? "magpie";
 
 import { MODELS, costFor, type ModelEntry, type ModelKey, type StreamEvent, type Usage } from "./models";
 
@@ -42,15 +49,14 @@ function errorMessage(status: number, body: string): string {
   } catch {
     /* not JSON */
   }
-  if (status === 401) return "Together rejected that API key. Check it and try again.";
-  if (status === 429) return "Together is rate limiting this key. Wait a moment, or use your own key.";
-  return `Together API ${status}: ${msg}`;
+  if (status === 401) return "magpie rejected the request. Check its gateway settings.";
+  if (status === 429) return "magpie is rate limited upstream. Wait a moment and try again.";
+  return `magpie ${status}: ${msg}`;
 }
 
 export async function* streamChat(req: {
   messages: ChatMessage[];
   model: ModelKey;
-  apiKey?: string;
   maxTokens?: number;
   temperature?: number;
   signal?: AbortSignal;
@@ -60,22 +66,17 @@ export async function* streamChat(req: {
   toolChoice?: "auto" | "none";
 }): AsyncGenerator<StreamEvent> {
   const model: ModelEntry = MODELS[req.model];
-  const apiKey = req.apiKey?.trim() || process.env.TOGETHER_API_KEY;
-  if (!apiKey) {
-    yield { type: "error", text: "No Together API key. Set TOGETHER_API_KEY, or add your own key." };
-    return;
-  }
 
   yield { type: "meta", model: model.label };
 
   let res: Response;
   try {
-    res = await fetch(TOGETHER_URL, {
+    res = await fetch(LLM_URL, {
       method: "POST",
       signal: req.signal,
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${magpieKey()}`,
         "User-Agent": APP_UA,
       },
       body: JSON.stringify({
@@ -91,7 +92,7 @@ export async function* streamChat(req: {
     });
   } catch (e) {
     if (req.signal?.aborted) return;
-    yield { type: "error", text: `Could not reach Together: ${String(e)}` };
+    yield { type: "error", text: `Could not reach magpie — is it running on :3425? ${String(e)}` };
     return;
   }
 
@@ -164,22 +165,19 @@ export async function* streamChat(req: {
 export async function completeJSON<T>(req: {
   messages: ChatMessage[];
   model: ModelKey;
-  apiKey?: string;
   maxTokens?: number;
   signal?: AbortSignal;
   /** Let the model reason before it answers, for checking a text against itself. Its thinking spends from maxTokens. */
   thinking?: boolean;
 }): Promise<{ ok: true; data: T; usage: Usage } | { ok: false; error: string }> {
   const model: ModelEntry = MODELS[req.model];
-  const apiKey = req.apiKey?.trim() || process.env.TOGETHER_API_KEY;
-  if (!apiKey) return { ok: false, error: "No Together API key. Set TOGETHER_API_KEY, or add your own key." };
 
   let res: Response;
   try {
-    res = await fetch(TOGETHER_URL, {
+    res = await fetch(LLM_URL, {
       method: "POST",
       signal: req.signal,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}`, "User-Agent": APP_UA },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${magpieKey()}`, "User-Agent": APP_UA },
       body: JSON.stringify({
         model: model.id,
         temperature: 0.3,
@@ -190,7 +188,7 @@ export async function completeJSON<T>(req: {
       }),
     });
   } catch (e) {
-    return { ok: false, error: `Could not reach Together: ${String(e)}` };
+    return { ok: false, error: `Could not reach magpie — is it running on :3425? ${String(e)}` };
   }
   const body = await res.text();
   if (!res.ok) return { ok: false, error: errorMessage(res.status, body) };

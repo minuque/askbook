@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
+import { offsetOf, onScroll, scrollTo, scrollY, viewportH } from "@/lib/scroll";
 import { useGlosses, useHighlights, useStore } from "@/lib/store";
 import { useReader } from "./context";
 
@@ -12,6 +15,7 @@ type Geo = { docTop: number; docH: number; blocks: { id: string; top: number; h:
  * Click or drag anywhere to travel.
  */
 export function Rail({ articleEl }: { articleEl: HTMLElement | null }) {
+  useLang();
   const { ix } = useReader();
   const glosses = useGlosses(ix.article.id);
   const highlights = useHighlights(ix.article.id);
@@ -27,7 +31,7 @@ export function Rail({ articleEl }: { articleEl: HTMLElement | null }) {
   const measure = useCallback(() => {
     if (!articleEl || !railRef.current) return;
     const r = articleEl.getBoundingClientRect();
-    const docTop = r.top + window.scrollY;
+    const docTop = offsetOf(articleEl);
     const blocks = Array.from(articleEl.querySelectorAll<HTMLElement>("[data-block]")).map((el) => {
       const br = el.getBoundingClientRect();
       const len = (el.textContent ?? "").length;
@@ -57,12 +61,12 @@ export function Rail({ articleEl }: { articleEl: HTMLElement | null }) {
 
   useEffect(() => {
     if (!geo) return;
-    const on = () => setView({ top: window.scrollY - geo.docTop, h: window.innerHeight });
+    const on = () => setView({ top: scrollY() - geo.docTop, h: viewportH() });
     on();
-    window.addEventListener("scroll", on, { passive: true });
+    const off = onScroll(on);
     window.addEventListener("resize", on);
     return () => {
-      window.removeEventListener("scroll", on);
+      off();
       window.removeEventListener("resize", on);
     };
   }, [geo]);
@@ -78,7 +82,7 @@ export function Rail({ articleEl }: { articleEl: HTMLElement | null }) {
     const rr = railRef.current?.getBoundingClientRect();
     if (!rr) return;
     const y = Math.max(0, Math.min(railH, clientY - rr.top));
-    window.scrollTo({ top: geo.docTop + y / k - window.innerHeight * 0.3, behavior: drag.current ? "instant" : "smooth" });
+    scrollTo(geo.docTop + y / k - viewportH() * 0.3, drag.current ? "instant" : "smooth");
   };
 
   const sections = brief?.status === "ready" ? brief.data.sections : [];
@@ -100,7 +104,7 @@ export function Rail({ articleEl }: { articleEl: HTMLElement | null }) {
     <div
       ref={railRef}
       role="slider"
-      aria-label="Position in the text"
+      aria-label={t("positionInText")}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(Math.max(0, Math.min(1, (view.top + view.h * 0.3) / geo.docH)) * 100)}

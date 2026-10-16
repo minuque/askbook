@@ -1,7 +1,9 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, useState, ViewTransition } from "react";
-import { fmtMinutes, groupOf, lookOf, type Book, type Sort, type TagKey, type TopicKey } from "@/lib/library";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
+import { fmtMinutes, groupOf, lookOf, RUN_KEYS, TOPIC_KEYS, type Book, type Sort, type TagKey, type TopicKey } from "@/lib/library";
 import { Glyph, Spine } from "./Book";
 
 const PAD = 28;
@@ -37,6 +39,13 @@ function textWidth(s: string) {
 
 /** How wide a shelf label is, as drawn: its icon, its words, its count, and its padding. */
 const labelWidth = (l: { label: string; icon?: string; count: number }) => (l.icon ? 21 : 0) + textWidth(l.label) + 6 + textWidth(String(l.count)) + 17;
+
+/** A shelf label's display text: topic, month and length runs go through i18n; the rest come back as given. */
+function localizeLabel(l: Label): string {
+  if (l.key in TOPIC_KEYS) return t(TOPIC_KEYS[l.key as TopicKey] as never);
+  if (l.key in RUN_KEYS) return t(RUN_KEYS[l.key as keyof typeof RUN_KEYS] as never);
+  return l.label;
+}
 
 type Label = { key: string; label: string; icon?: TopicKey | TagKey; x: number; row: number; count: number };
 
@@ -132,12 +141,13 @@ export function Shelf({
   shown: Set<string>;
   sort: Sort;
   openId: string | null;
-  /** Books just added, here or by an agent: they drop in. */
+  /** Books just added: they drop in. */
   fresh: Set<string>;
   onOpen: (b: Book, el: HTMLElement) => void;
   /** A shelf label, clicked: that topic's own page. */
   onLabel?: (key: string) => void;
 }) {
+  useLang();
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [entering, setEntering] = useState(true);
@@ -201,12 +211,12 @@ export function Shelf({
         const body = (
           <>
             {l.icon && <Glyph k={l.icon} size={16} className="mr-[5px]" />}
-            {l.label}
+            {localizeLabel(l)}
             <span className="plank-n">{l.count}</span>
           </>
         );
         return onLabel ? (
-          <button key={`${sort}-${l.key}`} type="button" className="plank-label" style={style} onClick={() => onLabel(l.key)} data-tip={`Open ${l.label}`}>
+          <button key={`${sort}-${l.key}`} type="button" className="plank-label" style={style} onClick={() => onLabel(l.key)} data-tip={`Open ${localizeLabel(l)}`}>
             {body}
           </button>
         ) : (

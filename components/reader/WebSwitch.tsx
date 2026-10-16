@@ -1,10 +1,13 @@
 "use client";
 
 import { Globe } from "lucide-react";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
 import { useStore } from "@/lib/store";
 
 /** Whether answers may look things up on the web. On by default; the model decides when. Fact-check always searches. */
 export function WebSwitch({ tone = "plain" }: { tone?: "plain" | "lens" }) {
+  useLang();
   const on = useStore((s) => s.settings.search);
   const setSettings = useStore((s) => s.setSettings);
   const lens = tone === "lens";
@@ -12,9 +15,9 @@ export function WebSwitch({ tone = "plain" }: { tone?: "plain" | "lens" }) {
     <button
       type="button"
       aria-pressed={on}
-      aria-label="Search the web"
-      data-tip={on ? "Can look things up on the web" : "Answers from the text only"}
-      data-tip-hint={on ? "When a question needs it, cited as [1], [2]" : "Turn on to let answers search the web"}
+      aria-label={t("searchWeb")}
+      data-tip={on ? t("canLookUp") : t("textOnly")}
+      data-tip-hint={on ? t("citedAs") : t("turnOnSearch")}
       onMouseDown={(e) => e.preventDefault()}
       onClick={() => setSettings({ search: !on })}
       className={`flex h-7 shrink-0 items-center gap-1 rounded-[8px] px-2 text-[11.5px] font-medium transition-colors ${

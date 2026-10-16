@@ -2,7 +2,8 @@
 
 import { forwardRef } from "react";
 import { ArrowRight, BookmarkPlus, FileUp, Link2, TextCursorInput } from "lucide-react";
-import { openKeyMenu } from "@/lib/ask";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
 
 export type Busy = null | { label: string; pct?: number };
 
@@ -11,8 +12,6 @@ type Props = {
   setUrl: (v: string) => void;
   busy: Busy;
   error: string | null;
-  /** The error is fixed by the reader's own Together key: offer the key menu. */
-  errorNeedsKey?: boolean;
   onSubmit: (url: string) => void;
   /** Keep it in the library for later, instead of reading it now. */
   onSave: (url: string) => void;
@@ -21,7 +20,8 @@ type Props = {
 };
 
 /** The one thing to do on the landing page: give it something to read. */
-export const ImportBar = forwardRef<HTMLInputElement, Props>(function ImportBar({ url, setUrl, busy, error, errorNeedsKey, onSubmit, onSave, onPickFile, onPasteText }, ref) {
+export const ImportBar = forwardRef<HTMLInputElement, Props>(function ImportBar({ url, setUrl, busy, error, onSubmit, onSave, onPickFile, onPasteText }, ref) {
+  useLang();
   return (
     <div className="mt-10 w-full max-w-[600px] text-left sm:mt-12">
       <form
@@ -39,8 +39,8 @@ export const ImportBar = forwardRef<HTMLInputElement, Props>(function ImportBar(
           value={busy ? busy.label + (busy.pct !== undefined ? ` ${Math.round(busy.pct * 100)}%` : "") : url}
           onChange={(e) => setUrl(e.target.value)}
           disabled={!!busy}
-          placeholder="Paste a link to any article"
-          aria-label="Article link"
+          placeholder={t("pasteArticle")}
+          aria-label={t("articleLink")}
           inputMode="url"
           autoComplete="off"
           spellCheck={false}
@@ -50,9 +50,9 @@ export const ImportBar = forwardRef<HTMLInputElement, Props>(function ImportBar(
           <button
             type="button"
             onClick={() => onSave(url)}
-            aria-label="Save to your library"
-            data-tip="Save for later"
-            data-tip-hint="Into your library, sorted by topic"
+            aria-label={t("saveToLibrary")}
+            data-tip={t("saveForLater")}
+            data-tip-hint={t("intoLibrary")}
             className="grid size-12 shrink-0 place-items-center rounded-[13px] text-ink-2 transition-[background-color,color,transform] hover:bg-sunk hover:text-ink active:scale-[0.95]"
             style={{ animation: "fade 0.2s both" }}
           >
@@ -62,38 +62,30 @@ export const ImportBar = forwardRef<HTMLInputElement, Props>(function ImportBar(
         <button
           type="submit"
           disabled={!url.trim() || !!busy}
-          aria-label="Read"
+          aria-label={t("read")}
           className="inline-flex h-12 shrink-0 items-center gap-2 rounded-[13px] bg-ink px-4 text-[14.5px] font-medium text-bg transition-[opacity,transform] focus-visible:outline-offset-[-4px] focus-visible:outline-bg active:scale-[0.97] disabled:opacity-30 sm:px-5"
         >
-          <span className="hidden sm:inline">Read</span> <ArrowRight size={16} />
+          <span className="hidden sm:inline">{t("read")}</span> <ArrowRight size={16} />
         </button>
         {busy && <span aria-hidden className="import-progress" style={busy.pct !== undefined ? { ["--p" as string]: busy.pct } : undefined} />}
       </form>
 
       <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[13.5px] text-ink-3">
         <button type="button" onClick={onPickFile} disabled={!!busy} className="inline-flex items-center gap-1.5 transition-colors hover:text-ink">
-          <FileUp size={15} /> Open a PDF
+          <FileUp size={15} /> {t("openPdf")}
         </button>
         <button type="button" onClick={onPasteText} disabled={!!busy} className="inline-flex items-center gap-1.5 transition-colors hover:text-ink">
-          <TextCursorInput size={15} /> Paste text
+          <TextCursorInput size={15} /> {t("pasteText")}
         </button>
         <span className="hidden items-center gap-1.5 text-ink-4 sm:inline-flex">
-          or press <kbd>⌘</kbd>
-          <kbd>V</kbd> anywhere
+          {t("orPress")} <kbd>⌘</kbd>
+          <kbd>V</kbd> {t("anywhere")}
         </span>
       </div>
 
       {error && (
         <p className="mx-auto mt-4 max-w-[34rem] text-center text-[13.5px] leading-snug text-rubric-text" role="alert">
           {error}
-          {errorNeedsKey && (
-            <>
-              {" "}
-              <button type="button" onClick={openKeyMenu} className="font-medium text-ink underline decoration-rule-strong underline-offset-4">
-                Add your Together key
-              </button>
-            </>
-          )}
         </p>
       )}
     </div>

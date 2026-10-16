@@ -3,6 +3,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
 
 /**
  * The desk at the foot of the landing: one frame, the same size whatever is
@@ -10,6 +12,7 @@ import { ArrowRight } from "lucide-react";
  * tiles (or one wide one), and a quiet line under them.
  */
 export function Desk({ label, aside, foot, children }: { label: ReactNode; aside?: ReactNode; foot?: ReactNode; children: ReactNode }) {
+  useLang();
   return (
     <section className="desk" aria-label={typeof label === "string" ? label : undefined}>
       <header className="desk-head">

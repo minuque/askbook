@@ -3,26 +3,18 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import { TOPIC, lookOf, type Book } from "@/lib/library";
-import { MARK_NAMES, Mark, type AgentMark } from "./AgentMarks";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
+import { TOPIC, TOPIC_KEYS, lookOf, type Book } from "@/lib/library";
 import { Glyph, Plate } from "./Book";
 
-/** Which mark to show for a connection, from the name the reader gave it. */
-function markFor(via?: string): AgentMark | null {
-  if (!via) return null;
-  if (/grok/i.test(via)) return "grok";
-  if (/claude/i.test(via)) return "claude";
-  if (/chatgpt|openai/i.test(via)) return "chatgpt";
-  return null;
-}
-
-export type Wave = { ids: string[]; agent: boolean; via?: string; done: boolean; leaving?: boolean };
+export type Wave = { ids: string[]; done: boolean; leaving?: boolean };
 
 const SHOWN = 6;
 
 /**
- * Texts landing on the shelf while you look, from your agent or your own
- * hands: a card at the bottom of the page that fills with their covers as
+ * Texts landing on the shelf while you look: a card at the bottom of the
+ * page that fills with their covers as
  * they arrive, with a burst of confetti in their topics' inks for each batch.
  * Once the run is over, the whole batch can come straight back off.
  */
@@ -39,6 +31,7 @@ export function Arrivals({
   onRemove: () => void;
   onClose: () => void;
 }) {
+  useLang();
   const ref = useRef<HTMLDivElement>(null);
   const seen = useRef(0);
 
@@ -52,41 +45,23 @@ export function Arrivals({
     burst(el, [...colors, "#e8b04a", "#f3d9a4"], Math.min(70, 28 + fresh.length * 8));
   }, [books]);
 
-  const mark = markFor(wave.via);
-  const who = wave.agent ? (mark ? MARK_NAMES[mark] : wave.via || "Your agent") : null;
   const n = books.length;
   const latest = books[n - 1];
   const shown = books.slice(-SHOWN);
   const more = n - shown.length;
-  const noun = n === 1 ? "article" : "articles";
+  const noun = t(n === 1 ? "piece" : "pieces");
 
   return createPortal(
     <div ref={ref} className="arr" data-done={wave.done || undefined} data-leaving={wave.leaving || undefined} role="status" aria-live="polite">
       <div className="arr-head">
         <span className="arr-who" aria-hidden>
-          {mark ? <Mark k={mark} size={17} /> : wave.agent ? <Glyph k="agent" size={26} /> : <Glyph k="favorite" size={24} />}
+          <Glyph k="favorite" size={24} />
         </span>
         <p className="arr-line">
-          {who ? (
-            wave.done ? (
-              <>
-                <b>{who}</b> added {n} {noun} to your library
-              </>
-            ) : (
-              <>
-                <b>{who}</b> is adding articles to your library
-              </>
-            )
-          ) : wave.done ? (
-            <>
-              <b>{n}</b> new {noun} on your shelves
-            </>
-          ) : (
-            <>Adding to your library</>
-          )}
+          {wave.done ? t("newBooksOnShelves", { n, noun }) : t("addingToLibrary")}
         </p>
         {!wave.done && <span className="arr-count tabular-nums">{n}</span>}
-        <button type="button" aria-label="Dismiss" onClick={onClose} className="arr-x">
+        <button type="button" aria-label={t("dismiss")} onClick={onClose} className="arr-x">
           <X size={15} />
         </button>
       </div>
@@ -108,7 +83,7 @@ export function Arrivals({
           <span key={latest.id} className="arr-latest">
             <span className="arr-title">{latest.title}</span>
             <span className="arr-topic">
-              <Glyph k={latest.topic} size={15} /> {TOPIC[latest.topic].name}
+              <Glyph k={latest.topic} size={15} /> {t(TOPIC_KEYS[latest.topic] as never)}
             </span>
           </span>
         )}
@@ -117,10 +92,10 @@ export function Arrivals({
       {wave.done ? (
         <div className="arr-actions">
           <button type="button" onClick={onShow} className="arr-show">
-            Show {n === 1 ? "it" : "them"} on the shelf
+            {t("showThemOnShelf", { them: t(n === 1 ? "it" : "themPronoun") })}
           </button>
           <button type="button" onClick={onRemove} className="arr-undo">
-            Remove {n === 1 ? "it" : "them"}
+            {t("removeThem", { them: t(n === 1 ? "it" : "themPronoun") })}
           </button>
         </div>
       ) : (

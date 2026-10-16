@@ -1,11 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Atkinson_Hyperlegible_Next, Literata, Newsreader, Schibsted_Grotesk } from "next/font/google";
 import { BOOT_SCRIPT } from "@/lib/settings";
 import "./globals.css";
 import { Tooltips } from "@/components/ui/Tooltips";
-import { ClerkProvider } from "@clerk/nextjs";
-import { SyncAgent } from "@/components/account/SyncAgent";
+import { LocalSync } from "@/components/LocalSync";
 import { OG_IMAGE, SITE_URL } from "@/lib/brand";
 
 const serif = Newsreader({
@@ -43,6 +41,8 @@ const legible = Atkinson_Hyperlegible_Next({
 
 const DESCRIPTION = "Highlight any line and ask it anything. An open model writes the answer in the margin, beside the words, citing the paragraphs it used.";
 
+const SCROLL_MARK_SCRIPT = `(function(){var e=document.querySelector(".scroll-root"),t;if(!e)return;e.addEventListener("scroll",function(){e.classList.add("is-scrolling");clearTimeout(t);t=setTimeout(function(){e.classList.remove("is-scrolling")},900)},{passive:true})})()`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: "Gloss", template: "%s" },
@@ -59,22 +59,6 @@ export const viewport: Viewport = {
   ],
 };
 
-/** Clerk's sign-in and account screens, in the page's own ink and paper, in every theme. */
-const CLERK_APPEARANCE = {
-  variables: {
-    colorPrimary: "var(--ink)",
-    colorBackground: "var(--bg-raised)",
-    colorForeground: "var(--ink)",
-    colorMutedForeground: "var(--ink-3)",
-    colorInput: "var(--bg)",
-    colorInputForeground: "var(--ink)",
-    colorBorder: "var(--rule-strong)",
-    colorNeutral: "var(--ink)",
-    fontFamily: "var(--font-sans)",
-    borderRadius: "12px",
-  },
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${serif.variable} ${sans.variable} ${book.variable} ${legible.variable}`} suppressHydrationWarning>
@@ -82,13 +66,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
       </head>
       <body>
-        <ClerkProvider appearance={CLERK_APPEARANCE}>
+        <div className="scroll-root">
           {children}
-          <SyncAgent />
-        </ClerkProvider>
-        <Tooltips />
-        {/* Plausible: cookieless page views, from the production site only, so previews and local runs never count. */}
-        {process.env.VERCEL_ENV === "production" && <Script defer data-domain="usegloss.io" src="https://plausible.io/js/script.js" strategy="afterInteractive" />}
+          <LocalSync />
+          <Tooltips />
+        </div>
+        {/* Marks the scroll box while it moves, so its scrollbar thumb can stay
+            out of the way the rest of the time. */}
+        <script dangerouslySetInnerHTML={{ __html: SCROLL_MARK_SCRIPT }} />
       </body>
     </html>
   );

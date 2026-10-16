@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { ArrowRight } from "lucide-react";
-import { SignInButton } from "@clerk/nextjs";
 import { tidyTitle } from "@/lib/article";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
 import { SAMPLES } from "@/lib/samples";
 import { useStore } from "@/lib/store";
 import { todaysReview } from "@/lib/review";
@@ -14,29 +15,17 @@ import { Desk, DeskLink } from "./Desk";
 const RECENT = 3;
 
 const STEPS = [
-  { title: "Paste a link", body: "An article, a chapter or a PDF." },
-  { title: "Select any line", body: "A word, a sentence, a passage." },
-  { title: "Ask it anything", body: "The answer lands in the margin, citing the text." },
-];
-
-function SignInLine({ children }: { children: string }) {
-  return (
-    <>
-      {children}{" "}
-      <SignInButton mode="modal">
-        <button type="button" className="font-medium text-ink-2 underline decoration-rule-strong underline-offset-4 transition-colors hover:text-ink">
-          Sign in
-        </button>
-      </SignInButton>
-    </>
-  );
-}
+  { title: "pasteLink", body: "articleChapterPdf" },
+  { title: "selectAnyLine", body: "wordSentencePassage" },
+  { title: "askItAnything", body: "answerInMargin" },
+] as const;
 
 /**
  * What lies on the desk. With highlights, they are yours: today's review while
  * one is due, otherwise the lines you marked last. Before that, how it works.
  */
-export function HomeBelow({ signedIn }: { signedIn: boolean }) {
+export function HomeBelow() {
+  useLang();
   const hydrated = useStore((s) => s.hydrated);
   const highlights = useStore((s) => s.highlights);
   const library = useStore((s) => s.library);
@@ -61,18 +50,18 @@ export function HomeBelow({ signedIn }: { signedIn: boolean }) {
   // Held open at its full size until the shelf is read, so nothing shifts when it fills.
   if (!hydrated) return <div className="desk is-holding" aria-hidden />;
 
-  const foot = signedIn ? null : <SignInLine>{all.length ? "These live in this browser only." : "Keep your highlights on every device."}</SignInLine>;
+  const foot = null;
 
-  // Before any highlights: Hassan's three steps, for first-timers and anyone signed out.
+  // Before any highlights: the three steps, for first-timers.
   if (!all.length)
     return (
-      <Desk label="How it works" foot={foot}>
+      <Desk label={t("howItWorks")} foot={foot}>
         <ol className="desk-tiles">
           {STEPS.map((s, i) => (
             <li key={s.title} className="desk-tile is-step" style={{ ["--i" as string]: i }}>
               <span className="desk-step-n">{i + 1}</span>
-              <p className="mt-3 text-[14.5px] font-medium text-ink">{s.title}</p>
-              <p className="mt-1 text-[13.5px] leading-[1.42] text-ink-3">{s.body}</p>
+              <p className="mt-3 text-[14.5px] font-medium text-ink">{t(s.title)}</p>
+              <p className="mt-1 text-[13.5px] leading-[1.42] text-ink-3">{t(s.body)}</p>
             </li>
           ))}
         </ol>
@@ -82,7 +71,7 @@ export function HomeBelow({ signedIn }: { signedIn: boolean }) {
   if (todaysReview(all).deck.length > 0) return <DailyHighlight foot={foot} />;
 
   return (
-    <Desk label="Your latest highlights" aside={<DeskLink onClick={() => setUI({ shelf: "highlights" })}>{`All ${all.length}`}</DeskLink>} foot={foot}>
+    <Desk label={t("latestHighlights")} aside={<DeskLink onClick={() => setUI({ shelf: "highlights" })}>{`${t("all")} ${all.length}`}</DeskLink>} foot={foot}>
       <ol className="desk-tiles">
         {all.slice(0, RECENT).map((h, i) => (
           <li key={h.id} style={{ ["--i" as string]: i }}>
@@ -102,7 +91,7 @@ export function HomeBelow({ signedIn }: { signedIn: boolean }) {
         {/* Fewer than three: the room left keeps the row's shape. */}
         {all.length < RECENT && (
           <li className="desk-tile is-room" style={{ ["--i" as string]: all.length, gridColumn: `span ${RECENT - all.length}` }}>
-            Select a line in anything you read, and it waits for you here.
+            {t("selectLineWaits")}
           </li>
         )}
       </ol>
