@@ -1,5 +1,5 @@
 /**
- * Gloss desktop shell. The app is still the Next.js server — this process
+ * askbook desktop shell. The app is still the Next.js server — this process
  * only owns a window pointed at it, and in production starts that server
  * itself (forked as plain Node, so node:sqlite and wasm work unchanged).
  *
@@ -39,7 +39,7 @@ function startServer() {
       ...process.env,
       ELECTRON_RUN_AS_NODE: "1",
       NODE_ENV: "production",
-      GLOSS_DATA_DIR: app.getPath("userData"),
+      ASKBOOK_DATA_DIR: app.getPath("userData"),
       PORT: String(PORT),
       HOSTNAME: "127.0.0.1",
     },
@@ -83,7 +83,7 @@ function makeWindow() {
     height: 800,
     minWidth: 720,
     minHeight: 480,
-    title: "Gloss",
+    title: "askbook",
     backgroundColor: "#f6f3ec",
     autoHideMenuBar: true,
     // A toolbar-height strip the page never uses; the system still draws the
@@ -119,7 +119,7 @@ function makeWindow() {
     }
   });
 
-  ipcMain.on("gloss:theme", (_e, theme) => {
+  ipcMain.on("askbook:theme", (_e, theme) => {
     const c = THEME_CHROME[theme];
     if (c && !win.isDestroyed()) {
       win.setBackgroundColor(c.bg);

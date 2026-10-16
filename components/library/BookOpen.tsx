@@ -291,7 +291,7 @@ export function BookOpen({
                         <Glyph k={x.key} size={15} /> {t(TAG_KEYS[x.key] as never)}
                       </span>
                     ))}
-                    {book.sample && <span className="is-word">{t("sampleFromGloss")}</span>}
+                    {book.sample && <span className="is-word">{t("sampleFromAskbook")}</span>}
                     {book.tags.map((x) => (
                       <span key={x} className="is-word">
                         {x}

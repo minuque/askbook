@@ -209,7 +209,7 @@ function Links() {
 }
 
 /**
- * Bookmarklets: one click on any page opens it in Gloss, in a new tab, to read now
+ * Bookmarklets: one click on any page opens it in askbook, in a new tab, to read now
  * or to shelve for later (`/?url=` and `/?save=` on the home page).
  */
 function Bookmarklets() {
@@ -230,10 +230,10 @@ function Bookmarklets() {
       <p className="mt-1 text-[13px] text-ink-3">{t("dragBookmark")}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <a ref={readRef} onClick={(e) => e.preventDefault()} data-tip={t("dragMe")} className={pill}>
-          <BookOpen size={14} className="text-ink-3" /> {t("readInGloss")}
+          <BookOpen size={14} className="text-ink-3" /> {t("readInAskbook")}
         </a>
         <a ref={saveRef} onClick={(e) => e.preventDefault()} data-tip={t("dragMe")} className={pill}>
-          <BookmarkPlus size={14} className="text-ink-3" /> {t("saveToGloss")}
+          <BookmarkPlus size={14} className="text-ink-3" /> {t("saveToAskbook")}
         </a>
       </div>
       <details className="mt-3 text-[12.5px] text-ink-3">

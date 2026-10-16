@@ -1,15 +1,15 @@
 <p align="center">
-  <img alt="Gloss" src="public/og.png">
+  <img alt="askbook" src="public/og.png">
 </p>
 
-<h1 align="center">Gloss</h1>
+<h1 align="center">askbook</h1>
 
 <p align="center">A reader for articles, chapters and PDFs: select any line, start typing, and a local model writes the answer in the margin beside it, citing paragraphs you can check. Single machine: no accounts, no cloud database.</p>
 
 ## Tech stack
 
 - Next.js 16 (App Router, Turbopack), React 19, Tailwind v4, Zustand. Local-first: texts live in IndexedDB, and glosses, highlights and settings in localStorage.
-- One machine, one store: the shelf, texts, highlights, notes, glosses and reading progress also sync to a SQLite file on the server (`$GLOSS_DATA_DIR/gloss.db`, else `.data/gloss.db` in this checkout — `lib/db.ts`, `app/api/sync`), so a cleared browser loses nothing.
+- One machine, one store: the shelf, texts, highlights, notes, glosses and reading progress also sync to a SQLite file on the server (`$ASKBOOK_DATA_DIR/gloss.db`, else `.data/gloss.db` in this checkout — `lib/db.ts`, `app/api/sync`), so a cleared browser loses nothing.
 - Your own notes on any highlight, in the margin beside the model's (`Lens.tsx`, `Margin.tsx`). A daily review on the home page brings back five of your highlights, spaced like flashcards (`lib/review.ts`); the shelf searches every highlight and note, and exports them all as Markdown files ready for Obsidian (`lib/export.ts`, `lib/zip.ts`).
 - The library (`/library`, `components/library/`): everything on your shelf as a bookcase, arranged by topic, recency, colour or length, with a topic view of plates and a 3D book that comes off the shelf. Any text can be renamed (click its title, there or in the shelf sheet), and the three samples can be taken off the shelf, remembered per device (`hiddenSamples` in `lib/library-prefs.ts`). Every new text is sorted onto one of 24 fixed topics, with a few tags, by one model call (`lib/shelve.ts`, `app/api/shelve`); texts from before are sorted the first time the library opens (`lib/shelving.ts`). Covers are drawn placeholders in the topic's ink; topic plates and icons are generated art in `public/library/`.
 - Newsreader and Schibsted Grotesk, plus Literata and Atkinson Hyperlegible as optional reading faces; six themes, four pens and four highlighters from CSS variables, applied before first paint.
@@ -35,7 +35,7 @@ The app can run as a desktop window on Windows and macOS. Electron is only a she
 
 - Develop: `npm run dev` in one terminal, `npm run electron:dev` in another. The window attaches to the dev server on :3100.
 - Build installers later: `npm run dist` (runs `next build`, then `electron-builder` → `dist/`). macOS installers must be built on a Mac.
-- Data location: in a packaged build the SQLite file lives at the OS user-data directory (`%APPDATA%/Gloss/gloss.db` on Windows, `~/Library/Application Support/Gloss/gloss.db` on macOS) instead of `.data/`, so app updates never touch it. The env var `GLOSS_DATA_DIR` sets it; the Electron main process sets it to `app.getPath("userData")` for the server it forks.
+- Data location: in a packaged build the SQLite file lives at the OS user-data directory (`%APPDATA%/askbook/gloss.db` on Windows, `~/Library/Application Support/askbook/gloss.db` on macOS) instead of `.data/`, so app updates never touch it. The env var `ASKBOOK_DATA_DIR` sets it; the Electron main process sets it to `app.getPath("userData")` for the server it forks.
 - Still needed: magpie on `127.0.0.1:3425`. The desktop shell does not start it.
 
 ## Roadmap

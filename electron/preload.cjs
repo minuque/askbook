@@ -5,11 +5,11 @@
  */
 const { contextBridge, ipcRenderer } = require("electron");
 
-contextBridge.exposeInMainWorld("glossDesktop", {
+contextBridge.exposeInMainWorld("askbookDesktop", {
   platform: process.platform,
   version: process.env.npm_package_version ?? null,
   /** Called whenever the page's own theme changes; the main process repaints the title bar. */
-  setTheme: (theme) => ipcRenderer.send("gloss:theme", theme),
+  setTheme: (theme) => ipcRenderer.send("askbook:theme", theme),
 });
 
 // Windows keeps its window controls over the page's top strip; mark the document

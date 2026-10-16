@@ -4,7 +4,7 @@ import type { LayoutBlock } from "@llamaindex/liteparse-wasm";
 import { inlineMd, markdownBlocks, slugify, tidyTitle, undash, type Article, type Block } from "./article";
 
 /**
- * PDF to Gloss blocks, in two passes.
+ * PDF to askbook blocks, in two passes.
  *
  * 1. LiteParse (Rust, compiled to WebAssembly) reads the text layer in the
  *    browser: reading order across columns, headings, lists and real tables,
@@ -163,7 +163,7 @@ const plain = (md: string) =>
     .join("")
     .trim();
 
-/** One LiteParse block as a Gloss block, or nothing for rules, pictures and the shards of diagrams. */
+/** One LiteParse block as an askbook block, or nothing for rules, pictures and the shards of diagrams. */
 function toBlock(b: LayoutBlock): Block | null {
   const runs = (t: string) => inlineMd(undash(t.replace(/\s+/g, " ").trim()));
   switch (b.kind) {

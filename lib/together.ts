@@ -16,7 +16,7 @@
 
 export const MAGPIE_BASE = (process.env.MAGPIE_BASE_URL ?? "http://127.0.0.1:3425/v1").replace(/\/+$/, "");
 export const LLM_URL = `${MAGPIE_BASE}/chat/completions`;
-export const APP_UA = "Gloss/0.1";
+export const APP_UA = "askbook/0.1";
 const magpieKey = () => process.env.MAGPIE_API_KEY ?? "magpie";
 
 import { MODELS, costFor, type ModelEntry, type ModelKey, type StreamEvent, type Usage } from "./models";

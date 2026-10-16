@@ -45,11 +45,11 @@ const SCROLL_MARK_SCRIPT = `(function(){var e=document.querySelector(".scroll-ro
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: "Gloss", template: "%s" },
+  title: { default: "askbook", template: "%s" },
   description: DESCRIPTION,
-  applicationName: "Gloss",
-  openGraph: { type: "website", siteName: "Gloss", title: "Gloss", description: DESCRIPTION, url: "/", images: [OG_IMAGE] },
-  twitter: { card: "summary_large_image", title: "Gloss", description: DESCRIPTION, images: [OG_IMAGE.url] },
+  applicationName: "askbook",
+  openGraph: { type: "website", siteName: "askbook", title: "askbook", description: DESCRIPTION, url: "/", images: [OG_IMAGE] },
+  twitter: { card: "summary_large_image", title: "askbook", description: DESCRIPTION, images: [OG_IMAGE.url] },
 };
 
 export const viewport: Viewport = {
