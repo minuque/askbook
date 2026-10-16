@@ -137,7 +137,7 @@ export const STRINGS = {
   clearSearch: { en: "Clear search", zh: "清除搜索" },
   arrangeBy: { en: "Arrange by", zh: "排列方式" },
   filter: { en: "Filter", zh: "筛选" },
-  clickSpine: { en: "Click a spine to take it down. Arrow keys walk the shelf.", zh: "点击书脊取下，方向键在书架间移动。" },
+  clickSpine: { en: "Click a spine to take it down. Arrow keys walk the shelf.", zh: "点击书脊取下，方向键逐本移动。" },
   addToLibrary: { en: "Add to the library", zh: "加入书架" },
   addArticles: { en: "Add articles", zh: "添加文章" },
   pasteLinks: { en: "Paste links, one or many", zh: "粘贴链接，一条或多条" },

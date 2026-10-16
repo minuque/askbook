@@ -1098,6 +1098,9 @@ button.plank-label:hover .plank-n {
   animation: fade 0.45s var(--ease-out) both;
   transition: opacity 0.5s 0.42s var(--ease-out);
 }
+.ob-stage[data-phase="out"] {
+  pointer-events: none;
+}
 .ob-stage[data-phase="out"] .ob-backdrop {
   opacity: 0;
   pointer-events: none;

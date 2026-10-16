@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState, ViewTransition } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, ViewTransition } from "react";
 import { t } from "@/lib/i18n";
 import { useLang } from "@/lib/useI18n";
 import { fmtMinutes, groupOf, lookOf, RUN_KEYS, TOPIC_KEYS, type Book, type Sort, type TagKey, type TopicKey } from "@/lib/library";
@@ -187,21 +187,32 @@ export function Shelf({
   // Order of first appearance, for the stagger when the shelf fills.
   const order = new Map(visible.map((b, i) => [b.id, i]));
 
-  // Arrow keys walk along the shelf.
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-    const btns = visible.map((b) => ref.current?.querySelector<HTMLElement>(`[data-book="${b.id}"]`)).filter(Boolean) as HTMLElement[];
-    const i = btns.indexOf(document.activeElement as HTMLElement);
-    if (i < 0) return;
-    e.preventDefault();
-    btns[Math.max(0, Math.min(btns.length - 1, i + (e.key === "ArrowRight" ? 1 : -1)))]?.focus();
-  };
+  // Arrow keys walk along the shelf. Every book is its own tab stop, so the
+  // shelf can be reached with Tab; a bare arrow enters it at the end you
+  // pressed from, and then steps book by book. Keys that belong to something
+  // else — a field, the filter row, an open book — are left to it.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      if ((document.activeElement as HTMLElement | null)?.closest("input, textarea, select, [contenteditable], .lib-chip-row")) return;
+      if (document.querySelector("[role='dialog']")) return;
+      const btns = visible.map((b) => ref.current?.querySelector<HTMLElement>(`[data-book="${b.id}"]`)).filter(Boolean) as HTMLElement[];
+      if (!btns.length) return;
+      const i = btns.indexOf(document.activeElement as HTMLElement);
+      const next = i < 0 ? (e.key === "ArrowRight" ? 0 : btns.length - 1) : Math.max(0, Math.min(btns.length - 1, i + (e.key === "ArrowRight" ? 1 : -1)));
+      e.preventDefault();
+      btns[next]?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [visible]);
 
   const lastRow = rows - 1;
   const free = width - PAD - (ends[lastRow] ?? PAD);
 
   return (
-    <div ref={ref} className={`bookcase ${entering ? "is-entering" : ""}`} style={{ height: rows * PITCH - 20 }} onKeyDown={onKeyDown}>
+    <div ref={ref} className={`bookcase ${entering ? "is-entering" : ""}`} style={{ height: rows * PITCH - 20 }}>
       {Array.from({ length: Math.max(rows, 1) }, (_, r) => (
         <div key={r} className="plank" style={{ transform: `translateY(${r * PITCH + AREA}px)`, ["--i" as string]: r }} aria-hidden />
       ))}
