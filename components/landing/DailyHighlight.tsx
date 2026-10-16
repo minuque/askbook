@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useMemo, type ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { tidyTitle } from "@/lib/article";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
 import { DAILY, keepInRotation, retire, todaysReview } from "@/lib/review";
 import { SAMPLES } from "@/lib/samples";
 import { useStore } from "@/lib/store";
@@ -15,6 +17,7 @@ import { Desk, DeskLink } from "./Desk";
  * done and it leaves the review. Nothing at all until you have highlights.
  */
 export function DailyHighlight({ foot }: { foot?: ReactNode }) {
+  useLang();
   const hydrated = useStore((s) => s.hydrated);
   const highlights = useStore((s) => s.highlights);
   const library = useStore((s) => s.library);
@@ -40,11 +43,11 @@ export function DailyHighlight({ foot }: { foot?: ReactNode }) {
     <Desk
       label={
         <>
-          Today, from your highlights
+          {t("todayFromHighlights")}
           {total > 1 && <span className="ml-2 font-normal tabular-nums text-ink-4">{`${done + 1} of ${total}`}</span>}
         </>
       }
-      aside={<DeskLink onClick={() => setUI({ shelf: "highlights" })}>All highlights</DeskLink>}
+      aside={<DeskLink onClick={() => setUI({ shelf: "highlights" })}>{t("allHighlights")}</DeskLink>}
       foot={foot}
     >
       <div key={pick.id} className="desk-tile is-review">
@@ -67,20 +70,20 @@ export function DailyHighlight({ foot }: { foot?: ReactNode }) {
           <button
             type="button"
             onClick={() => updateHighlight(pick.articleId, pick.id, { review: keepInRotation(pick) })}
-            data-tip="Keep it coming back"
-            data-tip-hint="In a few days, then less often"
+            data-tip={t("keepComingBack")}
+            data-tip-hint={t("inAFewDays")}
             className="h-9 rounded-full bg-ink px-4 text-[13px] font-medium text-bg transition-transform active:scale-[0.97]"
           >
-            Next
+            {t("next")}
           </button>
           <button
             type="button"
             onClick={() => updateHighlight(pick.articleId, pick.id, { review: retire(pick) })}
-            data-tip="Done with this one"
-            data-tip-hint="It stays a highlight, but leaves the review"
+            data-tip={t("doneWithThis")}
+            data-tip-hint={t("staysHighlight")}
             className="h-9 rounded-full px-4 text-[13px] text-ink-3 transition-colors hover:bg-sunk hover:text-ink"
           >
-            Done with it
+            {t("doneWithIt")}
           </button>
         </div>
       </div>

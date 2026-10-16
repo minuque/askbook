@@ -21,8 +21,10 @@
 .lib-top[data-scrolled] {
   background: color-mix(in oklab, var(--bg) 86%, transparent);
   box-shadow: 0 1px 0 var(--rule);
-  backdrop-filter: blur(12px);
+  /* Prefixed first: the CSS pipeline treats the two as one property and keeps
+     the last, so the standard spelling has to come second. */
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .lib-hero {
@@ -1091,10 +1093,13 @@ button.plank-label:hover .plank-n {
   position: absolute;
   inset: 0;
   background: color-mix(in oklab, var(--bg) 70%, transparent);
-  backdrop-filter: blur(10px) saturate(0.9);
   -webkit-backdrop-filter: blur(10px) saturate(0.9);
+  backdrop-filter: blur(10px) saturate(0.9);
   animation: fade 0.45s var(--ease-out) both;
   transition: opacity 0.5s 0.42s var(--ease-out);
+}
+.ob-stage[data-phase="out"] {
+  pointer-events: none;
 }
 .ob-stage[data-phase="out"] .ob-backdrop {
   opacity: 0;

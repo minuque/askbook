@@ -4,6 +4,8 @@ import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { ARTICLE_QUESTIONS } from "@/lib/actions";
 import { startGloss } from "@/lib/ask";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
 import { useReader } from "./context";
 import { WebSwitch } from "./WebSwitch";
 
@@ -17,6 +19,7 @@ export const Composer = forwardRef<ComposerHandle, { currentBlock: () => string 
   { currentBlock, suggestions = ARTICLE_QUESTIONS },
   ref
 ) {
+  useLang();
   const { ix } = useReader();
   const [q, setQ] = useState("");
   const [focused, setFocused] = useState(false);
@@ -69,8 +72,8 @@ export const Composer = forwardRef<ComposerHandle, { currentBlock: () => string 
               inputRef.current?.blur();
             }
           }}
-          placeholder="Ask about the whole text"
-          aria-label="Ask anything about the whole text"
+          placeholder={t("askWhole")}
+          aria-label={t("askAnythingWhole")}
           className="h-9 min-w-0 flex-1 bg-transparent text-[14.5px] text-ink outline-none focus-visible:outline-none placeholder:text-ink-3"
         />
         {!focused && !q && <kbd className="hidden sm:inline">/</kbd>}
@@ -78,8 +81,8 @@ export const Composer = forwardRef<ComposerHandle, { currentBlock: () => string 
         <button
           type="submit"
           disabled={!q.trim()}
-          aria-label="Ask"
-          data-tip="Ask"
+          aria-label={t("ask")}
+          data-tip={t("ask")}
           data-tip-kbd={"\u21b5"}
           className="grid size-9 shrink-0 place-items-center rounded-[11px] bg-ink text-bg transition-opacity disabled:opacity-25"
         >

@@ -1,9 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
-import { isCollection, pullRows, pushRows, type Collection, type PushRow } from "@/lib/db";
+import { isCollection, pullRows, pushRows, LOCAL_USER, type Collection, type PushRow } from "@/lib/db";
 
 export const runtime = "nodejs";
 
-/** Vercel caps a request body at 4.5MB; the client batches below this. */
+/** The client batches well under this. */
 const MAX_BODY = 4_400_000;
 const MAX_ROWS = 2000;
 const MAX_DATA = 256_000;
@@ -11,22 +10,18 @@ const MAX_DATA = 256_000;
 type InRow = { id: string; articleId: string; data: unknown; deleted?: boolean; doc?: unknown };
 
 /**
- * Pull: every row of the signed-in reader's that changed since `since`,
- * tombstones included. Article texts are left out; they are fetched one at a
- * time from /api/articles/[id], so a big shelf never makes a huge response.
+ * Pull: every row that changed since `since`, tombstones included. Article
+ * texts are left out; they are fetched one at a time from /api/articles/[id],
+ * so a big shelf never makes a huge response.
  */
 export async function GET(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return Response.json({ error: "Sign in to sync." }, { status: 401 });
   const raw = new URL(req.url).searchParams.get("since");
   const since = raw && !Number.isNaN(Date.parse(raw)) ? new Date(raw).toISOString() : "1970-01-01T00:00:00Z";
-  return Response.json(await pullRows(userId, since));
+  return Response.json(await pullRows(LOCAL_USER, since));
 }
 
-/** Push: upsert the rows a device changed. */
+/** Push: upsert the rows the browser changed. */
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return Response.json({ error: "Sign in to sync." }, { status: 401 });
   if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY) return Response.json({ error: "Too large." }, { status: 413 });
 
   let body: { changes?: Record<string, InRow[]> };
@@ -50,7 +45,7 @@ export async function POST(req: Request) {
     count += changes[table].length;
   }
   if (count > MAX_ROWS) return Response.json({ error: "Too many rows in one push." }, { status: 413 });
-  await pushRows(userId, changes);
+  await pushRows(LOCAL_USER, changes);
   return Response.json({ ok: true, count });
 }
 

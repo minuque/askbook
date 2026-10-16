@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { anchorToRange, blockEl } from "@/lib/anchor";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
 import { MARKERS } from "@/lib/settings";
 import { useStore, type Gloss, type Highlight } from "@/lib/store";
 import { GlossCard, marginStyle } from "./GlossCard";
@@ -61,6 +63,7 @@ export function Margin({
   gutter: number;
   onOpenNote: (h: Highlight) => void;
 }) {
+  useLang();
   const colRef = useRef<HTMLDivElement>(null);
   const cards = useRef(new Map<string, HTMLElement>());
   const activeGloss = useStore((s) => s.activeGloss);
@@ -213,7 +216,7 @@ export function Margin({
           onClick={() => onOpenNote(h)}
           className={`mnote${active === h.id ? " is-active" : ""}`}
           style={{ ...marginStyle(layout.tops[h.id], !placed.current.has(h.id)), ["--note-c" as string]: MARKERS.find((m) => m.key === (h.color ?? "yellow"))?.color }}
-          aria-label={`Your note: ${h.note}. Edit note.`}
+          aria-label={t("yourNoteEdit", { note: h.note ?? "" })}
         >
           <span className="line-clamp-4 whitespace-pre-line">{h.note}</span>
         </button>
@@ -228,8 +231,8 @@ function EmptyMargin({ top }: { top: number }) {
       className="rise absolute inset-x-0 border-l-[1.5px] border-rule-strong py-1 pl-[15px] text-[13px] leading-relaxed text-ink-3"
       style={{ top, animationDelay: "500ms" }}
     >
-      <p className="font-medium text-ink-2">This area is for notes.</p>
-      <p className="mt-1">Select any passage, then just start typing to ask.</p>
+      <p className="font-medium text-ink-2">{t("notesArea")}</p>
+      <p className="mt-1">{t("selectToAsk")}</p>
     </div>
   );
 }

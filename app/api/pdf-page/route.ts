@@ -1,25 +1,21 @@
-import { chargeFree, checkFree, needKey } from "@/lib/quota";
-import { APP_UA, TOGETHER_URL } from "@/lib/together";
+import { APP_UA, LLM_URL } from "@/lib/together";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
 /**
  * One PDF page the text layer cannot give us (a scan, an image of text, garbled
- * glyphs), read by a vision model into Markdown. Qwen3.8 Flash is the vision
- * model Together serves per request; the dedicated OCR models (GLM-OCR,
- * DeepSeek-OCR-2) need their own endpoint. Checked 2026-10-10.
+ * glyphs), read by a vision model into Markdown through the local magpie
+ * gateway. The default vision model must accept image input;
+ * opencode-go/qwen3.8-flash does.
  */
-const MODEL = "Qwen/Qwen3.8-Flash";
-const PRICE = { inPerM: 0.15, outPerM: 0.47 };
+const MODEL = process.env.MAGPIE_VISION_MODEL ?? "opencode-go/qwen3.8-flash";
 /**
  * mode "layout": a page whose text layer reads but whose layout came out
  * badly (columns, tables, maths), read again in the background
- * (lib/upgrade.ts). Qwen3.5-9B scored 6.9/10 on such pages in
- * scripts/pdf-eval against 3.9 for the text layer, at about $0.0005 a page.
+ * (lib/upgrade.ts). Same gateway model.
  */
-const LAYOUT_MODEL = "Qwen/Qwen3.5-9B";
-const LAYOUT_PRICE = { inPerM: 0.17, outPerM: 0.25 };
+const LAYOUT_MODEL = process.env.MAGPIE_LAYOUT_MODEL ?? MODEL;
 const MAX_IMAGE_CHARS = 3_500_000;
 
 const PROMPT = `Transcribe this document page into clean Markdown, in reading order.
@@ -47,7 +43,7 @@ function clean(md: string): string {
 }
 
 export async function POST(req: Request) {
-  let body: { image?: string; apiKey?: string; mode?: string };
+  let body: { image?: string; mode?: string };
   try {
     body = await req.json();
   } catch {
@@ -57,25 +53,15 @@ export async function POST(req: Request) {
   if (!/^data:image\/(jpeg|png|webp);base64,/.test(image)) return Response.json({ error: "Send the page as an image." }, { status: 400 });
   if (image.length > MAX_IMAGE_CHARS) return Response.json({ error: "That page image is too large." }, { status: 413 });
 
-  const headerKey = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "").trim();
-  const own = body.apiKey?.trim() || headerKey || undefined;
-  let free: Awaited<ReturnType<typeof checkFree>> | null = null;
-  if (!own) {
-    if (!process.env.TOGETHER_API_KEY) return needKey(null);
-    free = await checkFree(req, 90);
-    if (!free.ok) return needKey(free);
-  }
-
   const layout = body.mode === "layout";
   const model = layout ? LAYOUT_MODEL : MODEL;
-  const price = layout ? LAYOUT_PRICE : PRICE;
 
   let res: Response;
   try {
-    res = await fetch(TOGETHER_URL, {
+    res = await fetch(LLM_URL, {
       method: "POST",
       signal: req.signal,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${own ?? process.env.TOGETHER_API_KEY}`, "User-Agent": APP_UA },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.MAGPIE_API_KEY ?? "magpie"}`, "User-Agent": APP_UA },
       body: JSON.stringify({
         model,
         stream: true, // Qwen3.8 Flash only answers as a stream
@@ -122,9 +108,6 @@ export async function POST(req: Request) {
     }
   }
 
-  if (free) {
-    const cost = ((usage?.prompt_tokens ?? 1900) * price.inPerM + (usage?.completion_tokens ?? 1000) * price.outPerM) / 1_000_000;
-    await chargeFree(free.subject, cost);
-  }
+  void usage;
   return Response.json({ markdown: clean(text) });
 }

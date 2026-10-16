@@ -1,7 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState, ViewTransition } from "react";
-import { fmtMinutes, groupOf, lookOf, type Book, type Sort, type TagKey, type TopicKey } from "@/lib/library";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, ViewTransition } from "react";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
+import { fmtMinutes, groupOf, lookOf, RUN_KEYS, TOPIC_KEYS, type Book, type Sort, type TagKey, type TopicKey } from "@/lib/library";
 import { Glyph, Spine } from "./Book";
 
 const PAD = 28;
@@ -37,6 +39,13 @@ function textWidth(s: string) {
 
 /** How wide a shelf label is, as drawn: its icon, its words, its count, and its padding. */
 const labelWidth = (l: { label: string; icon?: string; count: number }) => (l.icon ? 21 : 0) + textWidth(l.label) + 6 + textWidth(String(l.count)) + 17;
+
+/** A shelf label's display text: topic, month and length runs go through i18n; the rest come back as given. */
+function localizeLabel(l: Label): string {
+  if (l.key in TOPIC_KEYS) return t(TOPIC_KEYS[l.key as TopicKey] as never);
+  if (l.key in RUN_KEYS) return t(RUN_KEYS[l.key as keyof typeof RUN_KEYS] as never);
+  return l.label;
+}
 
 type Label = { key: string; label: string; icon?: TopicKey | TagKey; x: number; row: number; count: number };
 
@@ -132,12 +141,13 @@ export function Shelf({
   shown: Set<string>;
   sort: Sort;
   openId: string | null;
-  /** Books just added, here or by an agent: they drop in. */
+  /** Books just added: they drop in. */
   fresh: Set<string>;
   onOpen: (b: Book, el: HTMLElement) => void;
   /** A shelf label, clicked: that topic's own page. */
   onLabel?: (key: string) => void;
 }) {
+  useLang();
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [entering, setEntering] = useState(true);
@@ -177,21 +187,32 @@ export function Shelf({
   // Order of first appearance, for the stagger when the shelf fills.
   const order = new Map(visible.map((b, i) => [b.id, i]));
 
-  // Arrow keys walk along the shelf.
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-    const btns = visible.map((b) => ref.current?.querySelector<HTMLElement>(`[data-book="${b.id}"]`)).filter(Boolean) as HTMLElement[];
-    const i = btns.indexOf(document.activeElement as HTMLElement);
-    if (i < 0) return;
-    e.preventDefault();
-    btns[Math.max(0, Math.min(btns.length - 1, i + (e.key === "ArrowRight" ? 1 : -1)))]?.focus();
-  };
+  // Arrow keys walk along the shelf. Every book is its own tab stop, so the
+  // shelf can be reached with Tab; a bare arrow enters it at the end you
+  // pressed from, and then steps book by book. Keys that belong to something
+  // else — a field, the filter row, an open book — are left to it.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      if ((document.activeElement as HTMLElement | null)?.closest("input, textarea, select, [contenteditable], .lib-chip-row")) return;
+      if (document.querySelector("[role='dialog']")) return;
+      const btns = visible.map((b) => ref.current?.querySelector<HTMLElement>(`[data-book="${b.id}"]`)).filter(Boolean) as HTMLElement[];
+      if (!btns.length) return;
+      const i = btns.indexOf(document.activeElement as HTMLElement);
+      const next = i < 0 ? (e.key === "ArrowRight" ? 0 : btns.length - 1) : Math.max(0, Math.min(btns.length - 1, i + (e.key === "ArrowRight" ? 1 : -1)));
+      e.preventDefault();
+      btns[next]?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [visible]);
 
   const lastRow = rows - 1;
   const free = width - PAD - (ends[lastRow] ?? PAD);
 
   return (
-    <div ref={ref} className={`bookcase ${entering ? "is-entering" : ""}`} style={{ height: rows * PITCH - 20 }} onKeyDown={onKeyDown}>
+    <div ref={ref} className={`bookcase ${entering ? "is-entering" : ""}`} style={{ height: rows * PITCH - 20 }}>
       {Array.from({ length: Math.max(rows, 1) }, (_, r) => (
         <div key={r} className="plank" style={{ transform: `translateY(${r * PITCH + AREA}px)`, ["--i" as string]: r }} aria-hidden />
       ))}
@@ -201,12 +222,12 @@ export function Shelf({
         const body = (
           <>
             {l.icon && <Glyph k={l.icon} size={16} className="mr-[5px]" />}
-            {l.label}
+            {localizeLabel(l)}
             <span className="plank-n">{l.count}</span>
           </>
         );
         return onLabel ? (
-          <button key={`${sort}-${l.key}`} type="button" className="plank-label" style={style} onClick={() => onLabel(l.key)} data-tip={`Open ${l.label}`}>
+          <button key={`${sort}-${l.key}`} type="button" className="plank-label" style={style} onClick={() => onLabel(l.key)} data-tip={`Open ${localizeLabel(l)}`}>
             {body}
           </button>
         ) : (

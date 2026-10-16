@@ -9,20 +9,20 @@ import { ARTICLE_QUESTIONS } from "@/lib/actions";
 import { SAMPLE_QUESTIONS } from "@/lib/samples";
 import { fetchBrief } from "@/lib/ask";
 import { BRAND } from "@/lib/brand";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/useI18n";
 import { indexArticle } from "@/lib/doc";
 import { fetchText } from "@/lib/sync";
 import { loadDoc, useGlosses, useHighlights, useStore, type Anchor } from "@/lib/store";
 import { applySettings } from "@/lib/settings";
+import { offsetOf, onScroll, scrollBy, scrollMax, scrollTo, scrollY, viewportH } from "@/lib/scroll";
 import { GlossWordmark } from "@/components/brand/Gloss";
 import { Block, type Mark } from "./Block";
 import { Brief } from "./Brief";
-import { CarefulRead } from "./CarefulRead";
 import { Composer, type ComposerHandle } from "./Composer";
 import { ReaderContext, useMedia, useReader, type ReaderApi } from "./context";
 import { GlossCard } from "./GlossCard";
 import { Lens, type OpenHighlight } from "./Lens";
-import { ListenBar } from "./Listen";
-import { SignInNudge } from "@/components/account/SignInNudge";
 import { Margin } from "./Margin";
 import { Notebook } from "./Notebook";
 import { Peek, Shortcuts, Toast } from "./Overlays";
@@ -30,6 +30,7 @@ import { Rail } from "./Rail";
 import { TopBar } from "./TopBar";
 
 export function Reader({ id, initial }: { id: string; initial: Article | null }) {
+  useLang();
   const [article, setArticle] = useState<Article | null>(initial);
   const [missing, setMissing] = useState(false);
   const hydrate = useStore((s) => s.hydrate);
@@ -71,7 +72,7 @@ export function Reader({ id, initial }: { id: string; initial: Article | null })
     keep.current = null;
     if (!k) return;
     const el = document.querySelector<HTMLElement>(`.prose-read [data-block="${CSS.escape(k.id)}"]`);
-    if (el) window.scrollBy({ top: el.getBoundingClientRect().top - k.top, behavior: "instant" });
+    if (el) scrollBy(el.getBoundingClientRect().top - k.top);
   }, [article]);
 
   if (missing)
@@ -79,17 +80,17 @@ export function Reader({ id, initial }: { id: string; initial: Article | null })
       <main className="grid min-h-dvh place-items-center px-6 text-center">
         <div>
           <GlossWordmark />
-          <p className="mt-6 font-serif text-[26px] text-ink">This text is not on this device.</p>
-          <p className="mt-2 text-[14px] text-ink-3">Imported texts live in the browser that imported them, or in your account when you are signed in.</p>
+          <p className="mt-6 font-serif text-[26px] text-ink">{t("textNotHere")}</p>
+          <p className="mt-2 text-[14px] text-ink-3">{t("importedTexts")}</p>
           <Link href="/" className="mt-6 inline-flex h-10 items-center rounded-full bg-ink px-5 text-[14px] font-medium text-bg">
-            Back to the library
+            {t("backToLibrary")}
           </Link>
         </div>
       </main>
     );
   if (!shown)
     return (
-      <main aria-busy className="mx-auto max-w-[44rem] px-6 pt-[calc(var(--topbar-h)+64px)]" style={{ animation: "fade 0.4s 0.15s var(--ease-out) both" }}>
+      <main aria-busy className="mx-auto max-w-[44rem] px-6 pt-[calc(var(--content-top)+64px)]" style={{ animation: "fade 0.4s 0.15s var(--ease-out) both" }}>
         <div className="shimmer h-12 w-[78%] rounded-[10px]" />
         <div className="shimmer mt-4 h-12 w-[46%] rounded-[10px]" />
         <div className="shimmer mt-8 h-4 w-[60%]" />
@@ -107,6 +108,7 @@ const GUTTER_WIDE = 64;
 const GUTTER_MID = 52;
 
 function ReaderInner({ article }: { article: Article }) {
+  useLang();
   const ix = useMemo(() => indexArticle(article), [article]);
   const articleId = article.id;
   const [articleEl, setArticleEl] = useState<HTMLDivElement | null>(null);
@@ -148,8 +150,8 @@ function ReaderInner({ article }: { article: Article }) {
   const jumpToBlock = useCallback((blockId: string, opts?: { flash?: boolean }) => {
     const el = blockEl(blockId);
     if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.28;
-    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    const top = offsetOf(el) - viewportH() * 0.28;
+    scrollTo(Math.max(0, top), "smooth");
     if (opts?.flash !== false) {
       el.classList.remove("is-flash");
       void el.offsetWidth;
@@ -265,8 +267,8 @@ function ReaderInner({ article }: { article: Article }) {
       saveT = setTimeout(() => {
         const id2 = currentRef.current;
         if (!id2) return;
-        const atEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 40;
-        const pct = window.scrollY < 160 ? 0 : atEnd ? 1 : ((ix.order.get(id2) ?? 0) + 1) / article.blocks.length;
+        const atEnd = scrollMax() - scrollY() <= 40;
+        const pct = scrollY() < 160 ? 0 : atEnd ? 1 : ((ix.order.get(id2) ?? 0) + 1) / article.blocks.length;
         setProgress(articleId, { block: id2, pct, at: Date.now() });
       }, 800);
     };
@@ -274,10 +276,10 @@ function ReaderInner({ article }: { article: Article }) {
       if (!raf) raf = requestAnimationFrame(measure);
     };
     measure();
-    window.addEventListener("scroll", on, { passive: true });
+    const off = onScroll(on);
     window.addEventListener("resize", on);
     return () => {
-      window.removeEventListener("scroll", on);
+      off();
       window.removeEventListener("resize", on);
       if (raf) cancelAnimationFrame(raf);
       if (saveT) clearTimeout(saveT);
@@ -305,7 +307,7 @@ function ReaderInner({ article }: { article: Article }) {
     if (p && n && n > 2 && p.pct < 0.98) {
       requestAnimationFrame(() => {
         const el = blockEl(p.block);
-        if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.28, behavior: "instant" });
+        if (el) scrollTo(offsetOf(el) - viewportH() * 0.28, "instant");
         setToast({ kind: "resume", n });
       });
     } else {
@@ -430,7 +432,7 @@ function ReaderInner({ article }: { article: Article }) {
           const b = st.briefs[articleId];
           if (!b || b.status === "error") fetchBrief(ix);
           else setUI({ briefOpen: !st.briefOpen });
-          if (window.scrollY > 400) window.scrollTo({ top: 0, behavior: "smooth" });
+          if (scrollY() > 400) scrollTo(0, "smooth");
           break;
         }
         case "n":
@@ -472,18 +474,18 @@ function ReaderInner({ article }: { article: Article }) {
 
   const paraCount = ix.byNumber.size;
   // A short line above the title: where this came from.
-  const kicker = article.source ? article.source.split(/,|\(/)[0].trim() : article.origin === "paste" ? "Pasted text" : undefined;
+  const kicker = article.source ? article.source.split(/,|\(/)[0].trim() : article.origin === "paste" ? t("pastedText") : undefined;
 
   return (
     <ReaderContext.Provider value={api}>
       <title>{`${article.title}, glossed`}</title>
       <div className={`${focusMode ? "focus-mode" : ""} ${showNumbers ? "" : "hide-nums"} ${notebookOpen ? "nb-open" : ""}`}>
-        <TopBar currentN={current ? ix.numbers.get(current) ?? null : null} pastTitle={pastTitle} listenFrom={askAnchor} />
+        <TopBar currentN={current ? ix.numbers.get(current) ?? null : null} pastTitle={pastTitle} />
 
-        <main className="relative z-[1] px-4 pb-10 pt-[calc(var(--topbar-h)+64px)] sm:px-6">
+        <main className="relative z-[1] px-4 pb-10 pt-[calc(var(--content-top)+64px)] sm:px-6">
           <div className="reader-grid">
             <div className="rg-rail relative">
-              <div className="sticky top-[calc(var(--topbar-h)+28px)] h-[calc(100dvh-var(--topbar-h)-64px)]">{withRail && showRail && <Rail articleEl={articleEl} />}</div>
+              <div className="sticky top-[calc(var(--content-top)+28px)] h-[calc(var(--viewport-h)-var(--content-top)-64px)]">{withRail && showRail && <Rail articleEl={articleEl} />}</div>
             </div>
             <div className="rg-numgap" aria-hidden />
 
@@ -508,11 +510,11 @@ function ReaderInner({ article }: { article: Article }) {
                 <div className="focus-hide rise mt-8 flex items-center gap-4 border-t border-rule pt-5" style={{ animationDelay: "140ms" }}>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[14.5px] leading-snug text-ink">
-                      {article.author ? <span className="font-medium">{article.author}</span> : <span className="font-medium">{kicker ?? "Untitled source"}</span>}
+                      {article.author ? <span className="font-medium">{article.author}</span> : <span className="font-medium">{kicker ?? t("untitledSource")}</span>}
                       {article.published && <span className="text-ink-3">{`  \u00b7  ${article.published}`}</span>}
                     </p>
                     <p className="mt-1 text-[13px] leading-snug text-ink-3">
-                      {readingMinutes(ix.words)} min read <span className="text-ink-4">{"\u00b7"}</span> {paraCount} paragraphs
+                      {t("minRead", { n: readingMinutes(ix.words) })} <span className="text-ink-4">{"\u00b7"}</span> {t("paragraphsCount", { n: paraCount })}
                     </p>
                   </div>
                   {article.sourceUrl && (
@@ -522,11 +524,10 @@ function ReaderInner({ article }: { article: Article }) {
                       rel="noopener noreferrer"
                       className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-rule px-3.5 text-[13px] font-medium text-ink-2 transition-[border-color,color,transform] hover:border-rule-strong hover:text-ink active:scale-[0.97]"
                     >
-                      Original <ArrowUpRight size={14} strokeWidth={2} />
+                      {t("original")} <ArrowUpRight size={14} strokeWidth={2} />
                     </a>
                   )}
                 </div>
-                <CarefulRead article={article} />
                 <div className="focus-hide rise" style={{ animationDelay: "200ms" }}>
                   <Brief />
                 </div>
@@ -555,20 +556,14 @@ function ReaderInner({ article }: { article: Article }) {
                 <p aria-hidden className="mb-8 text-center font-serif text-[26px] leading-none text-[var(--rubric)]">
                   ❦
                 </p>
-                {article.source && <p>From {article.source}.</p>}
-                <p className="mt-1">
-                  Glosses are powered by DeepSeek V4.1 Flash, served by{" "}
-                  <a href={BRAND.togetherUrl} target="_blank" rel="noopener noreferrer" className="text-ink-2 underline decoration-rule-strong underline-offset-4 hover:text-ink">
-                    Together AI
-                  </a>
-                  .
-                </p>
+                {article.source && <p>{t("fromSource", { source: article.source })}</p>}
+                <p className="mt-1">{t("glossesByMagpie")}</p>
                 <div className="mt-6 flex flex-wrap gap-2">
                   <button type="button" onClick={() => setUI({ notebookOpen: true })} className="h-9 rounded-full border border-rule px-4 text-[13px] font-medium text-ink-2 hover:border-rule-strong hover:text-ink">
-                    Open your notebook
+                    {t("openNotebook")}
                   </button>
                   <Link href="/" className="inline-flex h-9 items-center rounded-full border border-rule px-4 text-[13px] font-medium text-ink-2 hover:border-rule-strong hover:text-ink">
-                    Back to the library
+                    {t("backToLibrary")}
                   </Link>
                 </div>
               </footer>
@@ -586,13 +581,11 @@ function ReaderInner({ article }: { article: Article }) {
             role="status"
             className="focus-hint pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom)+32px)] left-1/2 z-40 whitespace-nowrap rounded-full bg-lens px-4 py-2 text-[13px] text-lens-fg shadow-pop"
           >
-            {window.matchMedia("(pointer: coarse)").matches ? "Focus mode. Scroll up for the menu." : "Focus mode. Press F or Esc to leave."}
+            {window.matchMedia("(pointer: coarse)").matches ? t("focusHintUp") : t("focusHintEsc")}
           </p>
         )}
 
         <Lens rootEl={articleEl} openHighlight={openHl} />
-        <ListenBar />
-        <SignInNudge />
         <Notebook />
         <Peek peek={peek} />
         <Shortcuts />
@@ -600,26 +593,28 @@ function ReaderInner({ article }: { article: Article }) {
 
         {toast?.kind === "resume" && (
           <Toast onClose={() => setToast(null)}>
-            <span>Picked up where you left off, at ¶{toast.n}.</span>
+            <span>{t("resumedAt", { n: toast.n })}</span>
             <button
               type="button"
               onClick={() => {
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                scrollTo(0, "smooth");
                 setToast(null);
               }}
               className="font-medium underline decoration-lens-mute underline-offset-4"
             >
-              Start over
+              {t("startOver")}
             </button>
           </Toast>
         )}
         {toast?.kind === "hint" && (
           <Toast onClose={dismissHint}>
             {window.matchMedia("(pointer: coarse)").matches ? (
-              <span>Select any passage to ask about it, explain it or highlight it.</span>
+              <span>{t("selectPassage")}</span>
             ) : (
               <span>
-                Select any passage, then <span className="font-medium">just start typing</span> to ask about it.
+                {t("selectPassageType").split("{a}")[0]}
+                <span className="font-medium">{t("justStartTyping")}</span>
+                {t("selectPassageType").split("{a}")[1]}
               </span>
             )}
           </Toast>
@@ -633,6 +628,7 @@ const EMPTY: Mark[] = [];
 
 /** Under 1080px there is no margin, so the active gloss rises as a sheet. */
 function GlossSheet() {
+  useLang();
   const { ix } = useReader();
   const glosses = useGlosses(ix.article.id);
   const active = useStore((s) => s.activeGloss);
@@ -647,7 +643,7 @@ function GlossSheet() {
     >
       <div className="sticky top-0 z-10 flex items-center justify-center bg-raised/95 pb-1 pt-2.5 backdrop-blur">
         <span className="h-1 w-9 rounded-full bg-rule-strong" aria-hidden />
-        <button type="button" aria-label="Close" onClick={() => setUI({ activeGloss: null })} className="absolute right-3 top-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-sunk">
+        <button type="button" aria-label={t("close")} onClick={() => setUI({ activeGloss: null })} className="absolute right-3 top-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-sunk">
           <X size={16} />
         </button>
       </div>

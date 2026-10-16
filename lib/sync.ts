@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Account sync for signed-in readers. The browser stays the source of truth
- * while you read; this mirrors it to the account and back.
+ * Sync to the local server's SQLite. The browser stays the source of truth
+ * while you read; this mirrors it to the .data/gloss.db file and back.
  *
  * - Push: what changed since the last push, found by comparing each entity's
  *   stable JSON with a baseline of what the server already has. Deletions are
@@ -87,8 +87,8 @@ export function watchShelf(): () => void {
 
 const emptyBaseline = (): Baseline => ({ since: null, seen: Object.fromEntries(COLLECTIONS.map((c) => [c, {}])) as Baseline["seen"] });
 
-export function startSync(userId: string) {
-  const storeKey = `gloss:sync:${userId}`;
+export function startSync() {
+  const storeKey = "gloss:sync:local";
   let base: Baseline = emptyBaseline();
   try {
     const raw = localStorage.getItem(storeKey);

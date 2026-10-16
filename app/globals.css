@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ==========================================================================
-   Gloss. A critical edition for anything you read.
+   askbook. A critical edition for anything you read.
    Paper, ink, a yellow highlighter for you and a vermilion pen for the model.
    ========================================================================== */
 
@@ -184,6 +184,164 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
   --topbar-h: 60px;
+  /* How far content sits below the top of the scroll area. In the browser the
+     bar floats over the page, so content clears it. In the desktop shell the
+     page scrolls in a box that already starts below the bar. */
+  --content-top: var(--topbar-h);
+  /* The height of the scroll area. */
+  --viewport-h: 100dvh;
+}
+
+/* The desktop shell on Windows draws its window controls into the top-right of
+   the window (titleBarOverlay, 40px in electron/main.cjs). The page then
+   scrolls in a box that starts below them, so the page's scrollbar is never
+   covered by a button. The app's own bar is exactly the strip's height, shares
+   the window buttons' center line, is draggable, and runs right up to them.
+   Set by the Electron preload. */
+html.desktop-win {
+  --topbar-h: 40px;
+  /* The window controls cover the top 40px and hide the bar's own bottom rule.
+     The bar runs 4px past them (the rule below), and the reader clears those
+     4px. The home and library bars are in the flow; their page padding covers it. */
+  --content-top: 4px;
+  --viewport-h: calc(100dvh - var(--topbar-h));
+  /* Clearance between the bar's icons and the window's edges. */
+  --bar-inset: 16px;
+  height: 100dvh;
+  overflow: hidden;
+}
+html.desktop-win .app-topbar {
+  height: calc(var(--topbar-h) + 4px);
+}
+html.desktop-win body {
+  margin-top: var(--topbar-h);
+  height: var(--viewport-h);
+  min-height: 0; /* the base rule's 100dvh would push the box past the window */
+  overflow: hidden; /* the page scrolls in .scroll-root, not here */
+}
+/* The page's scroll box. A plain div, so its scrollbar is the one CSS can
+   style: Windows paints a native scrollbar on <body>, with a track of its own
+   that no stylesheet reaches.
+   No scrollbar-color here. In Chromium that property wins over the
+   ::-webkit-scrollbar rules below and brings back the native ends of the
+   track, arrow buttons and all. The thumb stays hidden until the page is
+   actually moving, the same as the browser's overlay scrollbar does.
+   The track keeps a gap from the window edge and an arrow glyph at each end,
+   drawn with the scrollbar's own buttons: a stylesheet cannot put an element
+   there, and these buttons sit in the track itself. */
+html.desktop-win .scroll-root {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: clip;
+}
+html.desktop-win .scroll-root::-webkit-scrollbar {
+  width: 14px;
+}
+html.desktop-win .scroll-root::-webkit-scrollbar-track {
+  background: transparent;
+}
+html.desktop-win .scroll-root::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border: 3.5px solid transparent; /* 7px thumb: the width of the arrow glyph */
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+/* background-color, never the shorthand: the shorthand resets background-clip,
+   and the thumb then paints its full 14px track width, under the clear border. */
+html.desktop-win .scroll-root.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: var(--ink-4);
+}
+/* The track's own arrow button at each end. A filled triangle, the shape
+   Windows draws. The stroke rounds its three corners: same triangle, a 0.8px
+   radius, so it reads as the native glyph rather than a crisp vector point. */
+html.desktop-win .scroll-root::-webkit-scrollbar-button {
+  display: block;
+  height: 14px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+html.desktop-win .scroll-root::-webkit-scrollbar-button:vertical:decrement {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6'><path d='M4 1.3L6.7 4.7H1.3Z' fill='%23968f80' stroke='%23968f80' stroke-width='1.6' stroke-linejoin='round'/></svg>");
+  background-position: center 5px;
+}
+html.desktop-win .scroll-root::-webkit-scrollbar-button:vertical:increment {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6'><path d='M4 4.7L1.3 1.3H6.7Z' fill='%23968f80' stroke='%23968f80' stroke-width='1.6' stroke-linejoin='round'/></svg>");
+  background-position: center 3px;
+}
+/* Without these the double-arrow buttons come back and the arrows double up. */
+html.desktop-win .scroll-root::-webkit-scrollbar-button:vertical:start:increment,
+html.desktop-win .scroll-root::-webkit-scrollbar-button:vertical:end:decrement {
+  display: none;
+}
+html.desktop-win .app-topbar {
+  -webkit-app-region: drag;
+  /* The window controls sit over the bar's right end. The bar's bottom rule and
+     its progress hairline run the full width, behind the buttons; only the
+     controls stop short of them. */
+  padding-right: 0;
+}
+/* The home button leaves the bar's inner container and pins to the window's
+   left edge. The bar's nav goes the other way, so the controls the reader keeps
+   reach always sit in the same place, page to page.
+   --bar-inset is the gap beside the icons. Both ends use it, so the home button
+   and the nav keep the same clearance from the window's edges. */
+html.desktop-win .desktop-home-slot {
+  position: absolute;
+  left: var(--bar-inset);
+  top: 50%;
+  translate: 0 -50%;
+}
+html.desktop-win .lib-top .app-topbar > nav,
+html.desktop-win .landing .app-topbar > nav {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  padding-right: calc(138px + var(--bar-inset)); /* beside the window controls, not under them */
+}
+html.desktop-win .app-topbar > div,
+html.desktop-win .app-topbar > nav {
+  padding-right: calc(138px + var(--bar-inset)); /* the window controls, plus the same inset */
+}
+html.desktop-win .app-topbar a,
+html.desktop-win .app-topbar button,
+html.desktop-win .app-topbar input,
+html.desktop-win .app-topbar select {
+  -webkit-app-region: no-drag;
+}
+
+/* The notebook panel drops below the title strip, so the window controls are
+   clear of it and it can sit at the window's right edge. --bar-inset keeps it
+   off the scrollbar and lines its edge up with the bar's icon column. */
+html.desktop-win .notebook-panel {
+  top: calc(var(--topbar-h) + 6px);
+  right: var(--bar-inset);
+}
+
+/* macOS keeps its traffic lights floating over the page's top-left. */
+html.desktop-mac .app-topbar {
+  padding-left: 78px;
+}
+
+/* The home and library bars live in the flow and scroll with the page, or stick
+   to the top of it. In the desktop shell they are the window's title strip: out
+   of the flow at the very top, with their own room taken back as page padding. */
+html.desktop-win .lib-top,
+html.desktop-win .landing > .app-topbar {
+  position: fixed;
+  inset: 0 0 auto;
+}
+html.desktop-win .lib-top .app-topbar,
+html.desktop-win .landing > .app-topbar {
+  max-width: none; /* the bar runs the window's width, like the reader's */
+}
+html.desktop-win .library,
+html.desktop-win .landing {
+  padding-top: calc(var(--topbar-h) + 4px);
+}
+/* One-screen pages are one scroll box tall, not one window tall. */
+html.desktop-win .min-h-dvh {
+  min-height: var(--viewport-h);
 }
 
 @theme inline {
@@ -226,7 +384,7 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  scroll-padding-top: calc(var(--topbar-h) + 24px);
+  scroll-padding-top: calc(var(--content-top) + 24px);
 }
 
 body {
@@ -235,7 +393,7 @@ body {
   font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.5;
-  min-height: 100dvh;
+  min-height: var(--viewport-h);
   transition: background-color 0.35s var(--ease-out), color 0.35s var(--ease-out);
 }
 
@@ -1243,7 +1401,9 @@ mark.key .cite {
 }
 
 /* "any line", marked the way a reader marks: the wash draws across, then the
-   pen underlines it. From above the ascenders to just under the descenders. */
+   pen underlines it. Both stay inside the mark's own line box: the title's
+   line-height is below the font's natural leading, so the next line's box
+   starts where this one ends, and anything that crosses it lands on its ink. */
 .hero-mark {
   position: relative;
   isolation: isolate;
@@ -1259,7 +1419,7 @@ mark.key .cite {
 }
 
 .hero-mark::before {
-  inset: -0.05em -0.07em 0.02em;
+  inset: -0.05em -0.07em 0.08em;
   z-index: -1;
   border-radius: 0.06em;
   background: var(--rubric-wash);
@@ -1268,7 +1428,7 @@ mark.key .cite {
 .hero-mark::after {
   left: 0;
   right: 0;
-  bottom: 0.01em;
+  bottom: 0.05em;
   height: max(2.5px, 0.032em);
   border-radius: 99px;
   background: var(--rubric);

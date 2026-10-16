@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import type { Action } from "./actions";
 import type { Article, BriefData } from "./article";
+import { detectLang } from "./i18n";
 import { modelOf, type ModelKey, type Source, type Usage } from "./models";
 import { DEFAULT_SETTINGS, SETTINGS_KEY, type Marker, type Settings } from "./settings";
 
@@ -16,8 +17,6 @@ export type Turn = {
   usage?: Usage;
   model?: string;
   modelKey?: ModelKey;
-  /** The reader needs their own key to continue: free answers are spent, or there is no shared key. */
-  needKey?: boolean;
   /** Looking things up on the web before the answer starts. */
   searching?: boolean;
   /** The web results this answer may cite as [1], [2]. */
@@ -50,7 +49,7 @@ export type Highlight = { id: string; articleId: string; anchor: Anchor; created
 export type BriefState =
   | { status: "loading" }
   | { status: "ready"; data: BriefData; usage?: Usage; modelKey?: ModelKey; at: number }
-  | { status: "error"; error: string; needKey?: boolean };
+  | { status: "error"; error: string };
 
 export type { Settings } from "./settings";
 
@@ -80,10 +79,6 @@ export type LibraryItem = {
   favorite?: boolean;
   /** When it was first read to the end. */
   finishedAt?: number;
-  /** Shelved by an agent, through the Gloss MCP server. */
-  addedBy?: "agent";
-  /** Which connection an agent saved it through, by the name the reader gave it. */
-  addedVia?: string;
 };
 
 export type Progress = { block: string; pct: number; at: number };
@@ -203,7 +198,7 @@ export const useStore = create<State>((set, get) => ({
       briefs,
       progress: data.progress ?? {},
       library: data.library ?? [],
-      settings: { ...DEFAULT_SETTINGS, ...settings, model: modelOf(settings.model) },
+      settings: { ...DEFAULT_SETTINGS, lang: settings.lang ?? detectLang(), ...settings, model: modelOf(settings.model) },
       hydrated: true,
     });
     void migrateDocs();
@@ -212,6 +207,7 @@ export const useStore = create<State>((set, get) => ({
   setSettings: (s) => {
     const settings = { ...get().settings, ...s };
     set({ settings });
+    if (s.lang) document.documentElement.lang = s.lang;
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     } catch {}
