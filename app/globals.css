@@ -303,6 +303,17 @@ html.desktop-win .app-topbar > div,
 html.desktop-win .app-topbar > nav {
   padding-right: calc(138px + var(--bar-inset)); /* the window controls, plus the same inset */
 }
+/* Only the bar itself is a drag region. A box inside it that inherits `drag`
+   changes nothing about what can be dragged (its rect is inside the bar's),
+   but the browser unions the drag rects and subtracts the no-drag ones in tree
+   order, so a later box paints back over the controls under it: the reader's
+   title area starts at the bar's own padding, left of the pinned home button,
+   and its union swallowed the button's whole carve-out but 9px of it.
+   `initial`, not `none`: an explicit `none` is a no-drag region, which would
+   carve the inside of the bar back out of the drag area. */
+html.desktop-win .app-topbar * {
+  -webkit-app-region: initial;
+}
 html.desktop-win .app-topbar a,
 html.desktop-win .app-topbar button,
 html.desktop-win .app-topbar input,

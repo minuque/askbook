@@ -22,8 +22,14 @@ const THEME_CHROME = {
   ink: { bg: "#0f1319", fg: "#e3e8f0" },
 };
 
-const PORT = 3100;
+// The packaged app's own server. `ASKBOOK_PORT` overrides it; a dev server on
+// 3100 stays beside it instead of fighting for the port.
+const PORT = Number(process.env.ASKBOOK_PORT) || 3101;
 const ORIGIN = `http://localhost:${PORT}`;
+// The desktop shell always passes this to its own server, so the packaged app
+// and a dev server share the SQLite file as long as their paths match. For
+// `next dev` set ASKBOOK_DATA_DIR in .env.local to the same directory.
+const DATA_DIR = process.env.ASKBOOK_DATA_DIR || app.getPath("userData");
 const dev = !app.isPackaged;
 
 // On this machine Chromium's GPU process fails to launch inside its sandbox
@@ -44,7 +50,7 @@ let quitting = false;
 const LOG_MAX = 256 * 1024;
 const log = (msg) => {
   try {
-    const dir = app.isPackaged ? app.getPath("userData") : __dirname;
+    const dir = app.isPackaged ? DATA_DIR : __dirname;
     const file = path.join(dir, "launch.log");
     if (dev) console.log(msg);
     if (fs.existsSync(file) && fs.statSync(file).size > LOG_MAX) fs.rmSync(file);
@@ -68,7 +74,7 @@ function startServer() {
       ...process.env,
       ELECTRON_RUN_AS_NODE: "1",
       NODE_ENV: "production",
-      ASKBOOK_DATA_DIR: app.getPath("userData"),
+      ASKBOOK_DATA_DIR: DATA_DIR,
       PORT: String(PORT),
       HOSTNAME: "127.0.0.1",
     },
