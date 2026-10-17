@@ -221,56 +221,98 @@ html.desktop-win body {
 }
 /* The page's scroll box. A plain div, so its scrollbar is the one CSS can
    style: Windows paints a native scrollbar on <body>, with a track of its own
-   that no stylesheet reaches.
-   No scrollbar-color here. In Chromium that property wins over the
-   ::-webkit-scrollbar rules below and brings back the native ends of the
-   track, arrow buttons and all. The thumb stays hidden until the page is
-   actually moving, the same as the browser's overlay scrollbar does.
-   The track keeps a gap from the window edge and an arrow glyph at each end,
-   drawn with the scrollbar's own buttons: a stylesheet cannot put an element
-   there, and these buttons sit in the track itself. */
+   that no stylesheet reaches. */
 html.desktop-win .scroll-root {
   height: 100%;
   overflow-y: auto;
   overflow-x: clip;
 }
-html.desktop-win .scroll-root::-webkit-scrollbar {
+/* One bar for every box that scrolls in the shell: the page's, a table's, a
+   panel's, a sheet's. The track is clear and 14px across, the thumb 7px and
+   rounded, and each end carries the arrow button Windows draws.
+   No scrollbar-color anywhere in this block. In Chromium that property wins
+   over the ::-webkit-scrollbar rules and brings back the native ends of the
+   track, arrow buttons and all. */
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar {
   width: 14px;
+  height: 14px;
 }
-html.desktop-win .scroll-root::-webkit-scrollbar-track {
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-track {
   background: transparent;
 }
-html.desktop-win .scroll-root::-webkit-scrollbar-thumb {
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-thumb {
   background-color: transparent;
   border: 3.5px solid transparent; /* 7px thumb: the width of the arrow glyph */
   background-clip: padding-box;
   border-radius: 999px;
 }
+/* The thumb stays out of the way until the box is moving, the pointer is on
+   the thumb, or it is being dragged. --ink-4, --ink-3 and --ink-2 are three
+   steps up the theme's own ladder, so the step in contrast is the same on
+   every ground, light or dark. */
 /* background-color, never the shorthand: the shorthand resets background-clip,
    and the thumb then paints its full 14px track width, under the clear border. */
-html.desktop-win .scroll-root.is-scrolling::-webkit-scrollbar-thumb {
+html.desktop-win :is(.scroll-root, .scroll-thin).is-scrolling::-webkit-scrollbar-thumb {
   background-color: var(--ink-4);
 }
-/* The track's own arrow button at each end. A filled triangle, the shape
-   Windows draws. The stroke rounds its three corners: same triangle, a 0.8px
-   radius, so it reads as the native glyph rather than a crisp vector point. */
-html.desktop-win .scroll-root::-webkit-scrollbar-button {
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ink-3);
+}
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-thumb:active {
+  background-color: var(--ink-2);
+}
+/* The track's own arrow button at each end, one pair per axis. A filled
+   triangle, the shape Windows draws. The stroke rounds its three corners: same
+   triangle, a 0.8px radius, so it reads as the native glyph rather than a
+   crisp vector point.
+   The glyph keeps its own grey: a scrollbar part paints its background and
+   border and drops everything else, so a mask or a filter that would let the
+   glyph take the theme's ink is not available. Hover lights the button up
+   instead, with --ink mixed into the page: a dark wash on the light grounds
+   and a light one on the dark, so the arrow gains contrast either way. */
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button {
   display: block;
   height: 14px;
   background-position: center;
   background-repeat: no-repeat;
 }
-html.desktop-win .scroll-root::-webkit-scrollbar-button:vertical:decrement {
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button:horizontal {
+  width: 14px;
+}
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button:hover {
+  background-color: color-mix(in oklab, var(--ink) 14%, transparent);
+}
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button:active {
+  background-color: color-mix(in oklab, var(--ink) 22%, transparent);
+}
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button:vertical:decrement {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6'><path d='M4 1.3L6.7 4.7H1.3Z' fill='%23968f80' stroke='%23968f80' stroke-width='1.6' stroke-linejoin='round'/></svg>");
   background-position: center 5px;
 }
-html.desktop-win .scroll-root::-webkit-scrollbar-button:vertical:increment {
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button:vertical:increment {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6'><path d='M4 4.7L1.3 1.3H6.7Z' fill='%23968f80' stroke='%23968f80' stroke-width='1.6' stroke-linejoin='round'/></svg>");
   background-position: center 3px;
 }
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button:horizontal:decrement {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='6' height='8'><path d='M1.3 4L4.7 1.3V6.7Z' fill='%23968f80' stroke='%23968f80' stroke-width='1.6' stroke-linejoin='round'/></svg>");
+  background-position: 5px center;
+}
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button:horizontal:increment {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='6' height='8'><path d='M4.7 4L1.3 1.3V6.7Z' fill='%23968f80' stroke='%23968f80' stroke-width='1.6' stroke-linejoin='round'/></svg>");
+  background-position: 3px center;
+}
+/* .scroll-thin marks a box that wears this bar. The browser build gives it a
+   thin native one instead (see the class itself): back to the initial values
+   here, or those two properties would win over the rules above. */
+html.desktop-win .scroll-thin {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
 /* Without these the double-arrow buttons come back and the arrows double up. */
-html.desktop-win .scroll-root::-webkit-scrollbar-button:vertical:start:increment,
-html.desktop-win .scroll-root::-webkit-scrollbar-button:vertical:end:decrement {
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button:vertical:start:increment,
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button:vertical:end:decrement,
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button:horizontal:start:increment,
+html.desktop-win :is(.scroll-root, .scroll-thin)::-webkit-scrollbar-button:horizontal:end:decrement {
   display: none;
 }
 html.desktop-win .app-topbar {
@@ -1383,6 +1425,9 @@ mark.key .cite {
   }
 }
 
+/* Marks a box that wears the app's own scrollbar, and gives the browser build
+   a thin native one. The desktop shell overrides both properties and paints the
+   bar the page uses (see the desktop block at the top of this file). */
 .scroll-thin {
   scrollbar-width: thin;
   scrollbar-color: var(--rule-strong) transparent;

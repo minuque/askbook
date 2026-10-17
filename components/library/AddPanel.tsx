@@ -33,7 +33,7 @@ export function AddPanel({ onClose }: { onClose: () => void }) {
   return createPortal(
     <div className="fixed inset-0 z-[80]" role="presentation">
       <div className="absolute inset-0 bg-ink/20 backdrop-blur-[2px]" style={{ animation: "fade 0.2s both" }} onClick={onClose} />
-      <section role="dialog" aria-modal aria-label={t("addToLibrary")} className="add-panel">
+      <section role="dialog" aria-modal aria-label={t("addToLibrary")} className="add-panel scroll-thin">
         <header className="flex items-center justify-end gap-3">
           <button type="button" aria-label={t("close")} data-tip={t("close")} data-tip-kbd="Esc" onClick={onClose} className="grid size-9 place-items-center rounded-full text-ink-3 transition-colors hover:bg-sunk hover:text-ink">
             <X size={17} />
@@ -175,7 +175,7 @@ function Links() {
         }}
         placeholder={"https://paulgraham.com/greatwork.html\nhttps://..."}
         rows={4}
-        className="add-text"
+        className="add-text scroll-thin"
         aria-label={t("linksToSave")}
       />
       <div className="mt-3 flex items-center justify-between gap-3">
@@ -270,7 +270,7 @@ function CopyBlock({ title, body, text }: { title: string; body: string; text: s
           {copied ? t("copied") : t("copy")}
         </button>
       </div>
-      <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-sunk px-2.5 py-2 text-[11.5px] leading-relaxed text-ink-2">{text}</pre>
+      <pre className="scroll-thin mt-2 overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-sunk px-2.5 py-2 text-[11.5px] leading-relaxed text-ink-2">{text}</pre>
     </div>
   );
 }

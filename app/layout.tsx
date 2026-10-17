@@ -41,7 +41,7 @@ const legible = Atkinson_Hyperlegible_Next({
 
 const DESCRIPTION = "Highlight any line and ask it anything. An open model writes the answer in the margin, beside the words, citing the paragraphs it used.";
 
-const SCROLL_MARK_SCRIPT = `(function(){var e=document.querySelector(".scroll-root"),t;if(!e)return;e.addEventListener("scroll",function(){e.classList.add("is-scrolling");clearTimeout(t);t=setTimeout(function(){e.classList.remove("is-scrolling")},900)},{passive:true})})()`;
+const SCROLL_MARK_SCRIPT = `(function(){document.addEventListener("scroll",function(e){var el=e.target;if(!el||!el.classList||!el.matches(".scroll-root,.scroll-thin"))return;el.classList.add("is-scrolling");clearTimeout(el.__scrolling);el.__scrolling=setTimeout(function(){el.classList.remove("is-scrolling")},900)},true)})()`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -71,8 +71,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <LocalSync />
           <Tooltips />
         </div>
-        {/* Marks the scroll box while it moves, so its scrollbar thumb can stay
-            out of the way the rest of the time. */}
+        {/* Marks every scroll box while it moves, so its scrollbar thumb can stay
+            out of the way the rest of the time. Scroll events do not bubble, so
+            the listener is on the capture path. */}
         <script dangerouslySetInnerHTML={{ __html: SCROLL_MARK_SCRIPT }} />
       </body>
     </html>

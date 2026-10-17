@@ -372,7 +372,7 @@ export function Lens({ rootEl, openHighlight }: { rootEl: HTMLElement | null; op
               }}
               placeholder={existing ? t("noteOnHighlight") : t("noteOwnWords")}
               aria-label={t("yourNote")}
-              className="block max-h-[168px] min-h-8 w-full resize-none bg-transparent px-3 pt-[7px] font-serif text-[15px] leading-[1.45] text-lens-fg outline-none focus-visible:outline-none placeholder:text-lens-mute"
+              className="scroll-thin block max-h-[168px] min-h-8 w-full resize-none bg-transparent px-3 pt-[7px] font-serif text-[15px] leading-[1.45] text-lens-fg outline-none focus-visible:outline-none placeholder:text-lens-mute"
             />
             <div className="flex items-center justify-between gap-3 pb-0.5 pl-3 pr-0.5 pt-1">
               <span className="text-[11.5px] text-lens-mute">{t("keepHint")}</span>
