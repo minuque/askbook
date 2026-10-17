@@ -22,9 +22,9 @@ const THEME_CHROME = {
   ink: { bg: "#0f1319", fg: "#e3e8f0" },
 };
 
-// The packaged app's own server. `ASKBOOK_PORT` overrides it; a dev server on
-// 3100 stays beside it instead of fighting for the port.
-const PORT = Number(process.env.ASKBOOK_PORT) || 3101;
+// The packaged app's own server. `ASKBOOK_PORT` overrides it. Not 3100: that is
+// `next dev`'s port, and a package and a dev server must be able to run at once.
+const PORT = Number(process.env.ASKBOOK_PORT) || 4100;
 const ORIGIN = `http://localhost:${PORT}`;
 // The desktop shell always passes this to its own server, so the packaged app
 // and a dev server share the SQLite file as long as their paths match. For
