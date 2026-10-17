@@ -38,6 +38,23 @@ app.commandLine.appendSwitch("enable-unsafe-swiftshader");
 let server = null;
 let quitting = false;
 
+// Packaged apps are GUI-subsystem — stderr is invisible when you double-click
+// the exe, so a failed start leaves nothing behind. Keep a small launch log in
+// the user data directory instead.
+const LOG_MAX = 256 * 1024;
+const log = (msg) => {
+  try {
+    const dir = app.isPackaged ? app.getPath("userData") : __dirname;
+    const file = path.join(dir, "launch.log");
+    if (dev) console.log(msg);
+    if (fs.existsSync(file) && fs.statSync(file).size > LOG_MAX) fs.rmSync(file);
+    fs.appendFileSync(file, `[${new Date().toISOString()}] ${msg}\n`);
+  } catch {}
+};
+process.on("uncaughtException", (e) => log(`uncaughtException: ${e.stack || e}`));
+process.on("unhandledRejection", (e) => log(`unhandledRejection: ${e?.stack || e}`));
+log(`main start, packaged=${app.isPackaged}, appPath=${app.getAppPath()}`);
+
 /** The Next.js standalone server, only in a packaged build. The build emits a
  * self-contained `.next/standalone/` with a compiled `server.js` and just the
  * runtime deps, so we fork it directly instead of `next start`. It's the same
@@ -146,6 +163,7 @@ app.whenReady().then(async () => {
   if (!(await up())) {
     if (!dev) startServer();
     if (!(await waitForServer())) {
+      log("server did not answer within 30s, exiting");
       app.exit(1);
       return;
     }
