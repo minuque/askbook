@@ -9,7 +9,8 @@
     "start": "next start --port 3100",
     "lint": "tsc --noEmit",
     "electron:dev": "electron .",
-    "dist": "npm run build && electron-builder"
+    "release": "node -e \"fs.rmSync('.next',{recursive:true,force:true})\" && next build && node scripts/copy-standalone-assets.mjs && electron-builder --dir --publish never --config.directories.output=release",
+    "dist": "npm run build && node scripts/copy-standalone-assets.mjs && electron-builder"
   },
   "dependencies": {
     "@llamaindex/liteparse-wasm": "2.15.1",

@@ -2,26 +2,28 @@ appId: com.askbook.app
 productName: askbook
 directories:
   output: dist
-# A packaged build runs `next start` on the compiled output: .next plus the
-# deps it imports. Source dirs (app/, components/, lib/) are not shipped.
-# The shell forks `next start` inside the app directory, so that directory has to
-# be a real one: a path into app.asar cannot be a child process's working
-# directory, and the spawn fails with ENOENT.
+  # The packaged app directory is `app-bundle/` — a self-contained bundle that
+  # `scripts/copy-standalone-assets.mjs` produces by flattening Next's
+  # `.next/standalone/` (server.js + pruned .next/ + the ~23M node_modules it
+  # actually imports) plus electron/, public/ and .next/static/. Pointing
+  # appDir at it lets electron-builder treat the bundle as the whole app:
+  # its node_modules collector runs against the standalone dependency tree,
+  # not the full npm install.
+  app: app-bundle
+# A packaged build runs `app-bundle/server.js` — Next's standalone server —
+# inside the app directory: the Electron shell forks it as plain Node.
+# server.js must be forkable, so it cannot live in an asar archive (a path
+# into app.asar cannot be a child process's working directory, and the spawn
+# fails with ENOENT).
 asar: false
 files:
-  - electron/**
-  - .next/**
-  - public/**
-  - node_modules/**
-  - package.json
-  - next.config.ts
+  - "**/*"
+  # Next's serverExternalPackages shims live under `.next/node_modules/` — a
+  # subdirectory the default `!**/node_modules/**` exclusion would otherwise
+  # strip. Re-include it here; the root `node_modules/` is still collected by
+  # electron-builder's own dependency walker.
+  - ".next/node_modules/**"
   - "!**/*.map"
-  - "!.data/**"
-  - "!dist/**"
-  # Dev-server leftovers: only the production build is needed.
-  - "!.next/dev/**"
-  - "!.next/cache/**"
-  - "!.next/trace"
 win:
   target: nsis
   icon: electron/icon.png

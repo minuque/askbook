@@ -26,14 +26,26 @@ const PORT = 3100;
 const ORIGIN = `http://localhost:${PORT}`;
 const dev = !app.isPackaged;
 
+// On this machine Chromium's GPU process fails to launch inside its sandbox
+// (error 18, "GPU process isn't usable") and Electron kills the app on the
+// spot. `--disable-gpu-sandbox` lifts just that one process out of the
+// sandbox so it can start and use the real GPU for compositing; the renderer
+// and network sandboxes stay on. `enable-unsafe-swiftshader` keeps a
+// software rasteriser available for the cases a real GPU is absent.
+app.commandLine.appendSwitch("disable-gpu-sandbox");
+app.commandLine.appendSwitch("enable-unsafe-swiftshader");
+
 let server = null;
 let quitting = false;
 
-/** The Next.js server, only in a packaged build: `next start` in the app's own directory. */
+/** The Next.js standalone server, only in a packaged build. The build emits a
+ * self-contained `.next/standalone/` with a compiled `server.js` and just the
+ * runtime deps, so we fork it directly instead of `next start`. It's the same
+ * production server `next start` runs, minus the CLI wrapper. */
 function startServer() {
   const root = app.getAppPath();
-  const nextBin = path.join(root, "node_modules", "next", "dist", "bin", "next");
-  server = fork(nextBin, ["start", "-p", String(PORT), "-H", "127.0.0.1"], {
+  const serverPath = path.join(root, "server.js");
+  server = fork(serverPath, {
     cwd: root,
     env: {
       ...process.env,

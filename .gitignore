@@ -9,6 +9,8 @@ next-env.d.ts
 .claude/
 .data/
 dist/
+release/
+app-bundle/
 out/
 .playwright-mcp/
 build/*.png

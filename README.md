@@ -35,6 +35,7 @@ The app can run as a desktop window on Windows and macOS. Electron is only a she
 
 - Develop: `npm run dev` in one terminal, `npm run electron:dev` in another. The window attaches to the dev server on :3100.
 - Build installers later: `npm run dist` (runs `next build`, then `electron-builder` → `dist/`). macOS installers must be built on a Mac.
+- Iterate on a packaged build: `npm run release` → `release/win-unpacked/askbook.exe`, no installer step. It runs the same packaged path as an installed copy (Next's standalone `server.js` forked inside the app directory, data in the user-data directory), so double-clicking it verifies what the installer would ship. The script wipes `.next` first, because dev-server leftovers under `.next/dev` fail the build's type check.
 - Data location: in a packaged build the SQLite file lives at the OS user-data directory (`%APPDATA%/askbook/gloss.db` on Windows, `~/Library/Application Support/askbook/gloss.db` on macOS) instead of `.data/`, so app updates never touch it. The env var `ASKBOOK_DATA_DIR` sets it; the Electron main process sets it to `app.getPath("userData")` for the server it forks.
 - Still needed: magpie on `127.0.0.1:3425`. The desktop shell does not start it.
 
