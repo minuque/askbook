@@ -27,6 +27,9 @@ export function TopBar({ currentN, pastTitle }: { currentN: number | null; pastT
 
   // The bar stays put while you read. Only the hairline follows the scroll,
   // written straight to the DOM: no re-render per frame.
+  // The desktop shell scrolls .scroll-root, not the window, so the position
+  // and the listener both go through lib/scroll. window.scrollY and a window
+  // listener stay at 0 there, and the bar would never take its scrolled look.
   useEffect(() => {
     let last = scrollY();
     const on = () => {
@@ -75,7 +78,7 @@ export function TopBar({ currentN, pastTitle }: { currentN: number | null; pastT
     <header
       className={`app-topbar fixed inset-x-0 top-0 z-40 h-[var(--topbar-h)] transition-[transform,background-color,border-color] duration-300 ease-[var(--ease-out)] ${
         tucked ? "-translate-y-full" : ""
-      } ${scrolled ? "border-b border-rule bg-bg/85 backdrop-blur-md" : "border-b border-transparent"}`}
+      } ${scrolled ? "border-b border-rule bg-bg/70 backdrop-blur-md" : "border-b border-transparent"}`}
     >
       <div className="mx-auto flex h-full max-w-[1440px] items-center gap-4 px-4 sm:px-6">
         <span className="desktop-home-slot">

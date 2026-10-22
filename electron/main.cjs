@@ -13,7 +13,10 @@ const path = require("node:path");
 const fs = require("node:fs");
 const http = require("node:http");
 
-/** Keep the title bar in step with the page's own theme. */
+/** Keep the window's own chrome in step with the page's theme: the window
+ * background (seen before the page paints) and the colour the window controls
+ * are drawn in. The controls' overlay stays transparent so the app's bar shows
+ * through it. */
 const THEME_CHROME = {
   paper: { bg: "#f6f3ec", fg: "#1d1b18" },
   sepia: { bg: "#f1e6cf", fg: "#33281b" },
@@ -121,10 +124,12 @@ function makeWindow() {
     title: "askbook",
     backgroundColor: "#f6f3ec",
     autoHideMenuBar: true,
-    // A toolbar-height strip the page never uses; the system still draws the
-    // window controls into it, painted to match the theme.
+    // A toolbar-height strip the app's own bar fills; the system draws the
+    // window controls over it. The overlay itself is transparent, so the bar
+    // (and its frosted glass) runs on behind the buttons instead of stopping at
+    // an opaque patch around them.
     ...(process.platform === "win32"
-      ? { titleBarStyle: "hidden", titleBarOverlay: { color: "#f6f3ec", symbolColor: "#1d1b18", height: 40 } }
+      ? { titleBarStyle: "hidden", titleBarOverlay: { color: "#00000000", symbolColor: "#1d1b18", height: 40 } }
       : {}),
     ...(fs.existsSync(icon) ? { icon } : {}),
     webPreferences: {
@@ -158,7 +163,7 @@ function makeWindow() {
     const c = THEME_CHROME[theme];
     if (c && !win.isDestroyed()) {
       win.setBackgroundColor(c.bg);
-      if (process.platform === "win32") win.setTitleBarOverlay?.({ color: c.bg, symbolColor: c.fg, height: 40 });
+      if (process.platform === "win32") win.setTitleBarOverlay?.({ color: "#00000000", symbolColor: c.fg, height: 40 });
     }
   });
 

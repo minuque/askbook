@@ -3,10 +3,10 @@
  *
  * In the browser that is the document. The desktop shell scrolls a div
  * (.scroll-root, in the root layout) instead, in a box that starts below the
- * window's title bar, so the page's scrollbar is never covered by the window
+ * window's title strip, so the page's scrollbar is never covered by the window
  * buttons drawn into the top-right corner (see the desktop-win block in
  * globals.css). It is a div rather than the body because Windows paints a
- * native scrollbar on the body, with a track no stylesheet can remove.
+ * scrollbar on the body that no stylesheet touches.
  *
  * Everything that reads or moves the page's scroll position goes through here,
  * so both cases behave the same.
